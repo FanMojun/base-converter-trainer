@@ -10,6 +10,14 @@
   gap: var(--space-4);
 }
 
+/* 指标从 6 个增加到 7 个后，宽屏下会被排成「6 + 1」，最后一张孤零零地占一行。
+   这里在宽屏上限死 4 列，换行结果变成 4 + 3，视觉上更整齐。 */
+@media (min-width: 1200px) {
+  .stat-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 .stat-tile {
   display: flex;
   flex-direction: column;

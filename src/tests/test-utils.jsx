@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 
 import AppShell from '../components/AppShell.jsx';
 import StatsProvider from '../context/StatsProvider.jsx';
-import { MISTAKES_STORAGE_KEY, STATS_STORAGE_KEY } from '../context/StatsContext';
+import { MISTAKES_STORAGE_KEY, STATS_STORAGE_KEY, CONVERSIONS_STORAGE_KEY } from '../context/StatsContext';
 
 /**
  * 渲染整棵应用（全局状态 + 路由 + 外壳）。
@@ -44,6 +44,10 @@ export function readMistakes() {
   return JSON.parse(window.localStorage.getItem(MISTAKES_STORAGE_KEY));
 }
 
+export function readConversions() {
+  return JSON.parse(window.localStorage.getItem(CONVERSIONS_STORAGE_KEY));
+}
+
 /**
  * 读取转换结果。
  * `<output>` 的结构是「数值 + 表示进制的下标」，下标是子元素，
@@ -80,4 +84,4 @@ export function readStatTile(label) {
   return labelNode?.closest('.stat-tile') ?? null;
 }
 
-export { MISTAKES_STORAGE_KEY, STATS_STORAGE_KEY };
+export { CONVERSIONS_STORAGE_KEY, MISTAKES_STORAGE_KEY, STATS_STORAGE_KEY };

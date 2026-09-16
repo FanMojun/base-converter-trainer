@@ -37,3 +37,6 @@ Thumbs.db
 # 缓存
 .vite
 .eslintcache
+
+# Vite 加载配置文件时生成的临时文件（进程被中断时会残留）
+vite.config.js.timestamp-*.mjs

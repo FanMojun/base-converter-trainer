@@ -4,9 +4,13 @@ import { Link } from 'react-router-dom';
 import Statistics from '../components/Statistics.jsx';
 import useStats from '../hooks/useStats';
 import { baseName } from '../utils/converter';
+import { formatTime } from '../utils/format';
+
+/** 最近转换记录只展示最新若干条，完整历史没有查看价值，还占地方。 */
+const RECENT_CONVERSION_LIMIT = 5;
 
 export default function Dashboard() {
-  const { stats, mistakes, accuracy, resetAll } = useStats();
+  const { stats, mistakes, conversions, conversionTotal, accuracy, resetAll } = useStats();
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
 
   /** 每日明细按时间倒序，最近的在最上面。 */
@@ -22,6 +26,7 @@ export default function Dashboard() {
   }, [stats.history]);
 
   const recentMistakes = mistakes.slice(0, 3);
+  const recentConversions = conversions.slice(0, RECENT_CONVERSION_LIMIT);
 
   return (
     <div className="container page">
@@ -68,7 +73,47 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <Statistics stats={stats} accuracy={accuracy} />
+      <Statistics stats={stats} accuracy={accuracy} conversionTotal={conversionTotal} />
+
+      <section className="card dashboard-conversions">
+        <header className="chart-card__head">
+          <h2 className="card__title">最近转换记录</h2>
+          <p className="card__hint">
+            共 {conversionTotal} 次
+            {conversionTotal > RECENT_CONVERSION_LIMIT
+              ? `，仅显示最新 ${RECENT_CONVERSION_LIMIT} 条`
+              : ''}
+          </p>
+        </header>
+
+        {recentConversions.length === 0 ? (
+          <p className="muted">还没有转换记录，去转换页转一个数试试。</p>
+        ) : (
+          <ul className="conversion-list">
+            {recentConversions.map((record) => (
+              <li key={record.id}>
+                <span className="mono conversion-list__value">
+                  {record.input}
+                  <sub>{record.fromBase}</sub>
+                </span>
+                <span className="conversion-list__arrow" aria-hidden="true">
+                  →
+                </span>
+                <span className="mono conversion-list__value conversion-list__value--result">
+                  {record.result}
+                  <sub>{record.toBase}</sub>
+                </span>
+                <span className="muted conversion-list__bases">
+                  {baseName(record.fromBase)} → {baseName(record.toBase)}
+                </span>
+                <time className="muted" dateTime={new Date(record.timestamp).toISOString()}>
+                  {formatTime(record.timestamp)}
+                </time>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="dashboard-extra">
         <section className="card dashboard-table">

@@ -77,8 +77,12 @@ const tooltipStyle = (palette) => ({
 /**
  * 学习数据展示：指标卡片 + 练习量柱状图 + 正确率折线图。
  * 数据全部来自 StatsProvider，本组件不直接读 localStorage。
+ *
+ * 注意「练习次数」与「转换次数」是两个独立口径：
+ * 前者统计练习页提交的作答，后者统计转换器成功转换的次数，
+ * 两者不合并，避免把「随手转一个数」也算成一次练习。
  */
-export default function Statistics({ stats, accuracy }) {
+export default function Statistics({ stats, accuracy, conversionTotal = 0 }) {
   const palette = useChartPalette();
 
   const chartData = useMemo(
@@ -99,7 +103,8 @@ export default function Statistics({ stats, accuracy }) {
   return (
     <div className="statistics">
       <div className="stat-grid">
-        <StatTile label="总练习次数" value={stats.total} hint="含转换器与练习页的全部作答" />
+        <StatTile label="总转换次数" value={conversionTotal} hint="转换器成功转换的次数" />
+        <StatTile label="总练习次数" value={stats.total} hint="练习页提交的作答次数" />
         <StatTile label="正确次数" value={stats.correct} tone="success" />
         <StatTile label="错误次数" value={stats.wrong} tone="danger" />
         <StatTile label="正确率" value={accuracy} suffix="%" tone="primary" />

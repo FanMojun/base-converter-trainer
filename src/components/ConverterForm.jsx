@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import BaseSelect from './BaseSelect.jsx';
+import useStats from '../hooks/useStats';
 import { ConversionError, DIGIT_SETS, convert, groupDigits, toSubscript } from '../utils/converter';
 
 import './ConverterForm.css';
@@ -16,9 +17,11 @@ const SAMPLE_INPUTS = {
 
 /**
  * 进制转换表单。
- * 转换由统一的 convert() 完成，这里只负责收集输入、展示结果与错误。
+ * 转换由统一的 convert() 完成，这里只负责收集输入、展示结果与错误；
+ * 转换成功后的记录动作交给 StatsProvider，避免统计口径散落在页面里。
  */
 export default function ConverterForm({ initialFrom = 2, initialTo = 16 }) {
+  const { recordConversion } = useStats();
   const [input, setInput] = useState('');
   const [fromBase, setFromBase] = useState(initialFrom);
   const [toBase, setToBase] = useState(initialTo);
@@ -52,9 +55,19 @@ export default function ConverterForm({ initialFrom = 2, initialTo = 16 }) {
     event.preventDefault();
 
     try {
-      setResult(convert(input, fromBase, toBase));
+      const converted = convert(input, fromBase, toBase);
+
+      setResult(converted);
       setError('');
       setCopied(false);
+
+      // 只有转换成功才计入历史；失败（非法字符、空输入）不产生记录
+      recordConversion({
+        input: converted.input,
+        fromBase: converted.fromBase,
+        toBase: converted.toBase,
+        result: converted.result,
+      });
     } catch (err) {
       if (err instanceof ConversionError) {
         setError(err.message);

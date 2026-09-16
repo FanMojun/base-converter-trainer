@@ -3,17 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 
 import useStats from '../hooks/useStats';
 import { baseName, groupDigits } from '../utils/converter';
+import { formatTime } from '../utils/format';
 import { questionFromMistake } from '../utils/generator';
-
-/** 错题时间格式化，统一走这一个函数，避免各调用点写法不一致。 */
-function formatTime(timestamp) {
-  return new Date(timestamp).toLocaleString('zh-CN', {
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 export default function Mistakes() {
   const { mistakes, removeMistake, clearMistakes } = useStats();

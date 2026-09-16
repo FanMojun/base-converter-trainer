@@ -578,6 +578,56 @@
   color: var(--color-success);
 }
 
+.dashboard-conversions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.conversion-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.conversion-list li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  font-size: var(--text-sm);
+}
+
+.conversion-list__value {
+  font-weight: 700;
+  word-break: break-all;
+}
+
+.conversion-list__value--result {
+  color: var(--color-primary);
+}
+
+.conversion-list__arrow {
+  color: var(--color-text-muted);
+}
+
+/* 进制说明与时间靠右对齐，让「原值 → 结果」这条主线留在左侧 */
+.conversion-list__bases {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+/* 窄屏下允许换行，否则一行塞不下四段内容 */
+@media (max-width: 640px) {
+  .conversion-list__bases {
+    margin-left: 0;
+  }
+}
+
 @media (max-width: 900px) {
   .dashboard-extra {
     grid-template-columns: 1fr;
