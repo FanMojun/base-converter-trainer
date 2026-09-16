@@ -1,0 +1,109 @@
+/* ==========================================================================
+   设计令牌（Design Tokens）
+   全站颜色、间距、圆角、阴影的唯一来源，组件样式只允许引用这里的变量。
+   ========================================================================== */
+
+:root {
+  /* 颜色 —— 浅色主题（默认） */
+  --color-bg: #f4f5fb;
+  --color-bg-accent: #e9ecfb;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f8f9fd;
+  --color-border: #e4e7f1;
+  --color-border-strong: #ced3e5;
+
+  --color-text: #151824;
+  --color-text-soft: #4b5162;
+  --color-text-muted: #767d90;
+
+  --color-primary: #4f46e5;
+  --color-primary-strong: #4338ca;
+  --color-primary-soft: #eef0ff;
+  --color-accent: #0ea5e9;
+  --color-accent-soft: #e6f6fe;
+
+  --color-success: #15803d;
+  --color-success-soft: #e8f7ee;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fdecec;
+  --color-warning: #b45309;
+  --color-warning-soft: #fef5e7;
+
+  /* 排版 */
+  --font-sans: 'Inter', 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', system-ui, -apple-system,
+    'Helvetica Neue', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', 'JetBrains Mono', 'Cascadia Mono', Consolas,
+    'Courier New', monospace;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.375rem;
+  --text-2xl: 1.75rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 3rem;
+
+  /* 间距 */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* 圆角与阴影 */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 26px;
+  --radius-pill: 999px;
+
+  --shadow-sm: 0 1px 2px rgba(20, 24, 40, 0.06);
+  --shadow-md: 0 6px 18px rgba(20, 24, 40, 0.08);
+  --shadow-lg: 0 18px 48px rgba(20, 24, 40, 0.12);
+  --shadow-primary: 0 10px 24px rgba(79, 70, 229, 0.24);
+
+  /* 布局 */
+  --layout-max: 1120px;
+  --navbar-height: 64px;
+
+  --transition-fast: 120ms ease;
+  --transition-base: 220ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+/* 深色主题：跟随系统偏好自动切换 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0e1018;
+    --color-bg-accent: #151a2c;
+    --color-surface: #161a26;
+    --color-surface-muted: #1c2130;
+    --color-border: #262c3d;
+    --color-border-strong: #384056;
+
+    --color-text: #eef0f7;
+    --color-text-soft: #c3c8d8;
+    --color-text-muted: #8b93a8;
+
+    --color-primary: #8b85ff;
+    --color-primary-strong: #a5a0ff;
+    --color-primary-soft: #23203c;
+    --color-accent: #4cc4f5;
+    --color-accent-soft: #16303c;
+
+    --color-success: #4ade80;
+    --color-success-soft: #142c1d;
+    --color-danger: #f87171;
+    --color-danger-soft: #331b1b;
+    --color-warning: #fbbf24;
+    --color-warning-soft: #33280f;
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 18px 48px rgba(0, 0, 0, 0.55);
+    --shadow-primary: 0 10px 24px rgba(139, 133, 255, 0.22);
+  }
+}
