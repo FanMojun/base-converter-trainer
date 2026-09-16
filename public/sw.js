@@ -7,12 +7,26 @@
  *   - 静态资源（js/css/图片/图标）：缓存优先，同时后台更新，下次访问更快；
  *   - 只处理同源 GET 请求，避免污染第三方接口。
  *
+ * 关于路径：本文件被复制到构建产物的根目录，因此它自己所在的目录就是应用根目录。
+ * 这里统一用相对自身的路径（而不是写死 `/`），
+ * 使「根路径部署」和「子路径部署」（GitHub Pages 的 /<repo>/）共用同一份代码。
+ *
  * 注意：构建产物文件名带 hash，因此不需要在安装时预缓存全部资源，
  * 首次访问后按需缓存即可满足「基础离线访问」。
  */
 
-const CACHE_VERSION = 'bct-v1';
-const APP_SHELL = ['/', '/index.html', '/manifest.webmanifest', '/favicon.svg'];
+const CACHE_VERSION = 'bct-v2';
+
+/** 应用根目录（即本文件所在目录），两种部署方式下都能自动算对 */
+const SCOPE_ROOT = new URL('./', self.location).href;
+
+/** 把相对路径解析成站点内的绝对地址 */
+function asset(path) {
+  return new URL(path, SCOPE_ROOT).href;
+}
+
+const SHELL_INDEX = asset('index.html');
+const APP_SHELL = [SCOPE_ROOT, SHELL_INDEX, asset('manifest.webmanifest'), asset('favicon.svg')];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
@@ -52,13 +66,13 @@ self.addEventListener('fetch', (event) => {
       fetch(request)
         .then((response) => {
           const copy = response.clone();
-          caches.open(CACHE_VERSION).then((cache) => cache.put('/index.html', copy));
+          caches.open(CACHE_VERSION).then((cache) => cache.put(SHELL_INDEX, copy));
           return response;
         })
         .catch(() =>
           caches
-            .match('/index.html')
-            .then((cached) => cached || caches.match('/'))
+            .match(SHELL_INDEX)
+            .then((cached) => cached || caches.match(SCOPE_ROOT))
             .then(
               (cached) =>
                 cached ||

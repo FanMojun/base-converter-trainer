@@ -1,0 +1,75 @@
+name: Deploy to GitHub Pages
+
+# 推送 main 时自动跑一遍质量门禁（lint + test + build），
+# 全绿之后把 dist 发布到 GitHub Pages。
+# 也可以在 Actions 页面手动触发。
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# GitHub Pages 部署需要的最小权限集
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时间只保留一次部署，新的推送会取消排队中的旧任务
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: 构建与校验
+    runs-on: ubuntu-latest
+    steps:
+      - name: 拉取代码
+        uses: actions/checkout@v4
+
+      - name: 准备 Node 环境
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: 安装依赖
+        run: npm ci
+
+      - name: 代码检查
+        run: npm run lint
+
+      - name: 单元测试
+        run: npm test
+
+      - name: 生产构建
+        # 站点挂在 https://<user>.github.io/<repo>/ 子路径下，
+        # 必须注入 base，否则资源路径会指向域名根目录而 404
+        run: npm run build
+        env:
+          VITE_BASE_PATH: /base-converter-trainer/
+
+      - name: 生成 SPA 回退页
+        # GitHub Pages 对未知路径返回 404.html。
+        # 用首页副本兜底，刷新 /practice 这类深链接才不会白屏。
+        run: cp dist/index.html dist/404.html
+
+      - name: 装配 Pages
+        uses: actions/configure-pages@v5
+
+      - name: 上传构建产物
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    name: 发布到 Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 部署
+        id: deployment
+        uses: actions/deploy-pages@v4

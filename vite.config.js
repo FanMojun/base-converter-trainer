@@ -5,7 +5,9 @@ import react from '@vitejs/plugin-react';
 // 避免再维护一份 vitest.config.js。
 export default defineConfig({
   plugins: [react()],
-  base: '/',
+  // GitHub Pages 把站点挂在 /<repo>/ 子路径下，用环境变量注入；
+  // 本地开发与容器部署不传则为根路径，两种部署方式共用一份配置。
+  base: process.env.VITE_BASE_PATH || '/',
   server: {
     port: 5173,
     // 默认不自动打开浏览器，交给使用者自己控制

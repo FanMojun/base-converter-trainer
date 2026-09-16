@@ -7,19 +7,21 @@
 [![Vitest](https://img.shields.io/badge/Vitest-66%20tests%20passed-6da544?logo=vitest&logoColor=white)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-在线演示-2ea44f?logo=googlechrome&logoColor=white)](https://eefc7669b40241b5b85731383f41627b.app.workbuddy.host)
+[![Deploy](https://github.com/FanMojun/base-converter-trainer/actions/workflows/deploy.yml/badge.svg)](https://github.com/FanMojun/base-converter-trainer/actions/workflows/deploy.yml)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-在线演示-2ea44f?logo=googlechrome&logoColor=white)](https://fanmojun.github.io/base-converter-trainer/)
 
 进制转换是一个「看懂只要五分钟，练熟要练一百题」的知识点。这个项目把**转换工具**、**随机出题**、**学习数据**、**错题复盘**放进同一个 PWA 里，形成一个能自我强化的练习闭环。
 
 ## 在线 Demo
 
-**https://eefc7669b40241b5b85731383f41627b.app.workbuddy.host**
+**https://fanmojun.github.io/base-converter-trainer/**
 
 无需安装，直接打开即可使用全部功能。支持手机浏览器访问，也可以「添加到主屏幕」当作 App 使用。
 
-> 部署环境以 `npm run build && npm run preview -- --host 0.0.0.0 --port <port>` 作为单端口 HTTP 服务运行。
-> 同时 `vite.config.js` 里已为 `server` / `preview` 配好 `host: '0.0.0.0'` 与 `allowedHosts: true`，
-> 可直接搬到 Vercel / Netlify / 任意容器平台（`npm run build` 产物在 `dist/`）。
+> 站点由 GitHub Actions 自动发布（见 `.github/workflows/deploy.yml`）：推送 `main` 后先跑
+> `lint → test → build` 三道门禁，全绿才把 `dist/` 部署到 GitHub Pages。
+> 因为 Pages 把站点挂在 `/<repo>/` 子路径下，构建时会注入 `VITE_BASE_PATH`，
+> 并额外生成 `dist/404.html` 作为 SPA 深链接的回退页。
 
 ## 项目截图
 
@@ -185,6 +187,7 @@ npm test
 - `public/sw.js` 策略：页面导航**网络优先 + 缓存回退**，静态资源**缓存优先 + 后台更新**，只处理同源 GET 请求
 - 开发环境不注册 Service Worker（避免干扰 HMR），验证离线请使用 `npm run build && npm run preview`
 - `npm run icons` 内置一个手写的最小 PNG 编码器生成图标，不需要 canvas / sharp 等原生依赖
+- Manifest 与 Service Worker 内部一律使用**相对路径**，因此根路径部署与子路径部署（GitHub Pages 的 `/<repo>/`）共用同一份代码，不需要为了换部署位置改路径
 
 ## 浏览器支持
 
@@ -202,6 +205,7 @@ feat: add statistics dashboard        # Recharts 可视化 + 明细表
 feat: add PWA support                 # 安装能力 + 离线访问
 test: add unit tests                  # 66 项测试 + 可测试性重构
 docs: update README                   # 文档与截图
+ci: deploy to GitHub Pages            # Actions 自动构建发布 + 子路径适配
 ```
 
 ## 未来优化方向
@@ -214,6 +218,7 @@ docs: update README                   # 文档与截图
 - **可达性**：补充键盘导航细节与屏幕阅读器文案，目标 WCAG 2.1 AA
 - **性能**：Recharts 单独拆包已生效，可进一步按路由懒加载统计页
 - **部署**：接入 CI（lint + test + build）后自动发布，免去手动构建再上线
+- **工程**：为 CI 增加构建产物体积预算（bundle size budget），超限时让流水线失败
 
 ## License
 
