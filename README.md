@@ -4,7 +4,7 @@
 
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-5-646cff?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Vitest](https://img.shields.io/badge/Vitest-66%20tests%20passed-6da544?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-148%20tests%20passed-6da544?logo=vitest&logoColor=white)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Deploy](https://github.com/FanMojun/base-converter-trainer/actions/workflows/deploy.yml/badge.svg)](https://github.com/FanMojun/base-converter-trainer/actions/workflows/deploy.yml)
@@ -51,16 +51,18 @@
 | **响应式** | 桌面 / 平板 / 手机三档布局，导航在小屏折叠 |
 | **主题** | 跟随系统明暗偏好自动切换，图表配色同步 |
 
-## 技术栈
+## 技术栈与选型理由
 
-- **React 18** + **Vite 5** —— 组件化与极速构建
-- **JavaScript**（不使用 TypeScript）
-- **原生 CSS** —— 设计令牌 + 语义化类名，无 CSS 框架
-- **React Router 6** —— 多页面路由
-- **Recharts 2** —— 统计图表
-- **Vitest 2** —— 单元测试与整机冒烟测试
-- **ESLint 9**（flat config）—— 代码规范
-- **原生 Service Worker + Web App Manifest** —— PWA，未引入额外依赖
+| 选择 | 为什么是这个 |
+| --- | --- |
+| **React 18 + Context** | 五个页面共用同一份学习数据，而写入来自多个入口（转换页、首页内嵌转换器、练习页）。把写入收口到 `StatsProvider` 一处，比每个页面各自读写 `localStorage` 更不容易出现口径不一致 |
+| **Vite 5** | 开发态用原生 ESM，改样式即刻可见；构建时能把 react、图表库、统计页拆成独立文件，统计页的图表库不进首屏 |
+| **JavaScript（不上 TypeScript）** | 数据处理的正确性集中在 `utils/` 的纯函数里，已由测试覆盖；类型注解无法覆盖「localStorage 里的数据是上一版本的」这类问题，那部分改由存储层的结构校验兜底（见设计要点 4） |
+| **React Router 6** | 需要真实 URL —— 五个页面可分享、可前进后退，而不是靠组件状态切换 |
+| **Recharts 2** | 声明式、跟 React 渲染模型一致；只在统计页用得到，因此单独拆包并懒加载 |
+| **原生 CSS** | 样式规模只有三个文件，引入框架的收益不抵构建与心智成本；用 CSS 变量统一设计令牌，明暗主题只需换一组变量 |
+| **Vitest 2 + jsdom + Testing Library** | 与 Vite 共用同一份配置和转换链，不需要额外配 babel/jest 映射；测试可以像用户那样点击、输入、切换进制，而不是只断言渲染出的字符串 |
+| **原生 Service Worker + Manifest** | 离线策略只需要「导航网络优先 + 静态资源缓存优先」两条规则，手写比引入 Workbox 更容易讲清每条规则的来由和边界 |
 
 ## 快速开始
 
@@ -71,7 +73,7 @@ npm install
 # 2. 启动开发服务器（默认 http://localhost:5173）
 npm run dev
 
-# 3. 生产构建 + 本地预览（PWA 离线能力需要在预览下验证）
+# 3. 生产构建 + 本地预览（离线能力必须在生产产物下验证，开发态不注册 Service Worker）
 npm run build
 npm run preview
 ```
@@ -98,21 +100,23 @@ src/
 │   ├── BaseSelect.jsx   # 进制选择器，转换页与练习页共用
 │   ├── ConverterForm.jsx
 │   ├── PracticeCard.jsx
-│   └── Statistics.jsx
+│   ├── Statistics.jsx
+│   └── ErrorBoundary.jsx # 路由级错误边界，页面崩了不影响外壳
 ├── pages/
-│   ├── Home.jsx
+│   ├── Home.jsx         # 首屏 + 内嵌转换器
 │   ├── Converter.jsx
 │   ├── Practice.jsx
-│   ├── Dashboard.jsx
+│   ├── Dashboard.jsx    # 唯一被懒加载的路由
 │   └── Mistakes.jsx
 ├── utils/
 │   ├── converter.js     # 进制转换引擎（纯函数，无 React 依赖）
-│   └── generator.js     # 出题与判题（纯函数）
+│   ├── generator.js     # 出题与判题（纯函数）
+│   └── format.js        # 展示格式化，错题本与转换历史共用
 ├── hooks/
-│   ├── useStorage.js    # localStorage 封装：异常回退 + 跨标签页同步
+│   ├── useStorage.js    # localStorage 封装：结构校验 + 异常回退 + 跨标签页同步
 │   └── useStats.js
 ├── context/
-│   ├── StatsContext.js  # Context、初始结构、按天聚合等纯逻辑
+│   ├── StatsContext.js  # Context、初始结构、结构校验、按天聚合等纯逻辑
 │   └── StatsProvider.jsx
 ├── pwa/
 │   └── registerServiceWorker.js
@@ -121,9 +125,18 @@ src/
 │   ├── base.css         # 重置 + 通用原子类
 │   └── pages.css        # 页面级布局
 └── tests/
-    ├── converter.test.js
-    ├── generator.test.js
-    └── app.test.jsx     # 整机渲染冒烟测试
+    ├── setup.js              # jsdom 缺口的补齐 + jest-dom 匹配器
+    ├── test-utils.jsx        # 渲染整棵应用、读写 localStorage、读取页面状态
+    ├── converter.test.js     # 转换引擎（纯逻辑）
+    ├── generator.test.js     # 出题与判题（纯逻辑）
+    ├── app.test.jsx          # 路由与导航（真实点击）
+    ├── converter-page.test.jsx
+    ├── practice-page.test.jsx
+    ├── mistakes.test.jsx
+    ├── dashboard.test.jsx
+    ├── conversion-history.test.jsx
+    ├── storage.test.jsx      # 存储层结构校验与坏数据兜底
+    └── error-boundary.test.jsx
 ```
 
 ## 设计要点
@@ -150,13 +163,37 @@ src/
 
 **「练习次数」与「转换次数」是两个独立口径，刻意没有合并**：随手转一个数不等于做了一道题，把两者混在一起会让正确率失去意义。
 
-### 4. 数据只存本地
+### 4. 数据只存本地，且读出来先过一道校验
 
-所有学习数据保存在 `localStorage`，不上传任何服务器，也无需登录。`useStorage` 额外处理了三件事：写入失败（隐私模式 / 配额满）不崩溃、监听 `storage` 事件实现多标签页同步、提供 `reset()`。
+所有学习数据保存在 `localStorage`，不上传任何服务器，也无需登录。
 
-转换历史另有一条去重规则：同一组「输入值 + 源进制 + 目标进制」重复提交（例如连点两次转换按钮）只刷新最近一条，不增加次数；把进制调换过来（16→2 变成 2→16）则算新的一次。
+但 `JSON.parse` 成功不代表数据可用：用户可能手改过，浏览器里也可能残留着上一个版本的结构。所以读取时会走一遍**结构校验**（`sanitizeStats` / `sanitizeMistakes` / `sanitizeConversions`），把数据收敛成当前版本期望的形状，收敛不了就回退到初始值 —— 宁可丢掉一份坏数据，也不要让统计页在渲染时炸掉。校验通过后，下游的写操作就不必再写 `Array.isArray(previous) ? previous : []` 这类防御代码，判断只存在于存储边界一处。
 
-### 5. 错误提示面向使用者
+`useStorage` 另外处理了三件事：写入失败（隐私模式 / 配额满）不崩溃、监听 `storage` 事件实现多标签页同步（别的标签页清空数据时本页回到初始值，而不是把 `null` 写回去）、提供 `reset()`。
+
+转换历史有一条去重规则：同一组「输入值 + 源进制 + 目标进制」重复提交（例如连点两次转换按钮）只刷新最近一条，不增加次数；把进制调换过来（16→2 变成 2→16）则算新的一次。
+
+### 5. 首屏只装首屏需要的东西，页面崩了不牵连外壳
+
+统计页是唯一被懒加载的路由（`React.lazy` + `Suspense`）。理由很直接：图表库体积是首屏全部代码的两倍多，而用户不一定会打开统计页。
+
+首屏 JS 的 gzip 体积因此从约 171 KB 降到约 65 KB：
+
+| 分包（gzip） | 首屏 | 进入统计页时 |
+| --- | --- | --- |
+| `react` 53.4 KB | 需要 | 已加载 |
+| `index` 11.9 KB + 样式 4.9 KB | 需要 | 已加载 |
+| `charts` 105.6 KB | **不需要** | 按需加载 |
+| `Dashboard` 3.0 KB + 样式 0.5 KB | **不需要** | 按需加载 |
+
+配合两个决定：
+
+- **错误边界放在「路由出口」而不是最外层**。某个页面抛异常时，导航和页脚必须还活着，用户能点到别的页面去，而不是面对整片白屏。
+- **错误边界按路由地址重置**（`key={pathname}`）。切换页面即自动恢复，不需要用户手动刷新。
+
+这条边界不只是防渲染 bug。断网进入一个还没被缓存过的懒加载页面时，取分包会失败，用户看到的就是这个提示页 —— 比白屏可解释得多（离线能力的实测结果见下文「PWA 与离线」）。
+
+### 6. 错误提示面向使用者
 
 错误码（`EMPTY_INPUT` / `INVALID_CHARACTERS` / `INVALID_BASE` / `UNSUPPORTED_SIGN`）与提示文案分离。提示会直接告诉用户「哪个字符不合法」以及「合法字符集是什么」，而不是只丢一个「输入无效」。
 
@@ -167,24 +204,45 @@ npm test
 ```
 
 ```
- ✓ src/tests/converter.test.js   (31 tests)
- ✓ src/tests/generator.test.js   (24 tests)
- ✓ src/tests/app.test.jsx        (11 tests)
+ ✓ src/tests/converter.test.js           (31)
+ ✓ src/tests/generator.test.js           (24)
+ ✓ src/tests/practice-page.test.jsx      (15)
+ ✓ src/tests/converter-page.test.jsx     (14)
+ ✓ src/tests/conversion-history.test.jsx (13)
+ ✓ src/tests/storage.test.jsx            (13)
+ ✓ src/tests/error-boundary.test.jsx     (13)
+ ✓ src/tests/dashboard.test.jsx          (9)
+ ✓ src/tests/app.test.jsx                (8)
+ ✓ src/tests/mistakes.test.jsx           (8)
 
- Test Files  3 passed (3)
-      Tests  66 passed (66)
+ Test Files  10 passed (10)
+      Tests  148 passed (148)
 ```
 
-覆盖范围：
+测试分成两类，各管各的事：
 
-- **四种进制互转**：二进制↔十六进制、八进制、十二进制（含 `A=10` / `B=11` 的边界）、十进制中转
-- **全进制往返一致性**：2 / 8 / 10 / 12 / 16 两两组合共 25 组，`A → B → A` 结果必须一致
-- **大数精度**：64 位全 1 二进制串转十进制与十六进制
-- **错误输入**：空输入、空白字符串、非法字符、负数、不支持的进制，以及错误码是否正确
-- **大小写与空白**：`2d` / `FF` / `1010 1010` / `1010_1010`
-- **出题逻辑**：题面合法、源目标进制不同、难度约束（位数与可用进制）、答案自洽、题目 id 不重复
-- **判题容错**：大小写、前导零、空答案、目标进制非法字符
-- **整机冒烟**：五个路由各渲染一遍，防止页面级崩溃与未知路径白屏
+**纯逻辑（`converter.test.js` / `generator.test.js`，55 项）**
+不需要 DOM，直接断言函数输出。
+
+- 全进制往返一致性：2 / 8 / 10 / 12 / 16 两两组合共 25 组，`A → B → A` 结果必须一致
+- 大数精度：64 位全 1 二进制串转十进制与十六进制（`BigInt` 的存在理由）
+- 十二进制的 `A=10` / `B=11` 边界
+- 错误输入：空串、纯空白、非法字符、负数、不支持的进制，以及返回的错误码是否正确
+- 出题约束：题面在源进制下合法、源与目标进制必然不同、难度对应的位数与进制池、题目 id 不重复
+- 判题容错：大小写、前导零、空答案、目标进制非法字符
+
+**真实交互（其余 93 项）**
+用 `jsdom` + Testing Library 把整棵应用渲染出来，然后像用户那样操作：
+
+- 在输入框打字、点「转换」、切换进制、点「交换」，然后断言页面上出现的结果
+- 读取页面上真实的题目，自己算出正确答案再填进去，据此断言判题结果 —— 不依赖随机数种子
+- 提交错误答案 → 断言错题本里真的多了一条 → 点「重新练习」→ 断言跳回练习页
+- 断言写进 `localStorage` 的数据结构，而不只是屏幕上的数字
+- 灌入损坏 / 缺字段 / 旧结构的数据，断言页面照常渲染且数据被修正
+- 让某个页面在渲染时抛异常，断言导航栏还在、切到别的路由能自动恢复
+- 通过 `vi.mock` 让练习页抛错，验证错误边界的集成行为
+
+**一个仍然没覆盖的地方**（写在这里以免被误读成「全都测了」）：离线行为没有自动化测试。Service Worker 的生命周期在 `jsdom` 里跑不起来，这部分靠真实浏览器手工验证，结论记录在下面的「离线能力到什么程度」。
 
 ## PWA 与离线
 
@@ -197,6 +255,8 @@ npm test
 ### 离线能力到什么程度（实测，不是推测）
 
 验证方式：真实 Chrome 打开构建产物 → 等 Service Worker 接管 → **清空浏览器 HTTP 缓存** → **把静态服务器关掉** → 强制绕过 HTTP 缓存重载页面。只有这样才能排除「其实是浏览器自带缓存在兜底」的假象。
+
+> 顺带一个踩过的坑：只用 DevTools / CDP 的「Offline」开关测不准。它不一定作用到 Service Worker 自己发起的请求，于是断网重载「成功」了，其实是 Service Worker 照样联网把资源拿了回来。**把服务器真正停掉再刷新**，才是可信的断网测试。
 
 结论：
 
@@ -217,17 +277,38 @@ npm test
 
 ## 开发提交记录
 
-项目按真实开发节奏分阶段提交：
+项目按真实开发节奏分阶段提交，每个阶段一件事，不做「一次性大提交」。
+
+**第一轮：把功能做出来**
 
 ```
-chore: initialize react project       # 工程骨架与样式体系
-feat: implement base conversion engine # 转换引擎 + 转换页
-feat: add practice system             # 出题判题 + 错题本 + 存储层
-feat: add statistics dashboard        # Recharts 可视化 + 明细表
-feat: add PWA support                 # 安装能力 + 离线访问
-test: add unit tests                  # 66 项测试 + 可测试性重构
-docs: update README                   # 文档与截图
-ci: deploy to GitHub Pages            # Actions 自动构建发布 + 子路径适配
+chore: initialize react project          # 工程骨架与样式体系
+feat: implement base conversion engine   # 转换引擎 + 转换页
+feat: add practice system                # 出题判题 + 错题本 + 存储层
+feat: add statistics dashboard           # Recharts 可视化 + 明细表
+feat: add PWA support                    # 安装能力 + 离线访问
+test: add unit tests                     # 纯逻辑测试
+docs: update README                      # 文档与截图
+docs: add live demo link
+ci: deploy to GitHub Pages               # Actions 自动发布 + 子路径适配
+```
+
+**第二轮：按代码审查的结论做工程优化**
+
+这一轮的每一步都由一个具体问题驱动，而不是「感觉可以更好」：
+
+```
+test: add real interaction tests              # 原来的测试用 renderToString 断言字符串，
+                                              # 改不动输入框、点不了按钮，等于没测交互
+fix: sync statistics with converter feature   # 文档写了统计转换次数，实现里转换器却没记录，
+                                              # 属于「说了没做」，补上并统一口径
+refactor: optimize dashboard loading          # 首屏把 106 KB 的图表库也一起下载了，
+                                              # 统计页改为懒加载，首屏 JS gzip 从约 171 KB 降到约 65 KB
+fix: run CI on Node 22                        # jsdom 30 要求 Node ≥ 22.19，CI 用 Node 20 一直红
+feat: add error boundary                      # 单个页面抛异常会让整页白屏
+refactor: tidy storage layer and drop dead code  # 存储层补结构校验；清掉「写了但没人用」的导出
+fix: make offline access actually work on first visit  # 真断网测试发现离线其实打不开，
+                                                       # 此前看着能用是浏览器缓存在兜底
 ```
 
 ## 未来优化方向
@@ -238,9 +319,9 @@ ci: deploy to GitHub Pages            # Actions 自动构建发布 + 子路径�
 - **训练模式**：限时挑战、按进制专项训练、间隔重复（SRS）复习错题
 - **数据导出**：导出错题与统计数据为 JSON / CSV，支持云端同步
 - **可达性**：补充键盘导航细节与屏幕阅读器文案，目标 WCAG 2.1 AA
-- **性能**：统计页已改为按路由懒加载，首屏不再下载图表库；下一步可以做鼠标悬停导航时预取统计页，消掉首次进入的那一下等待
-- **部署**：接入 CI（lint + test + build）后自动发布，免去手动构建再上线
-- **工程**：为 CI 增加构建产物体积预算（bundle size budget），超限时让流水线失败
+- **构建体积预算**：CI 里加一道产物体积检查，超限直接让流水线失败（现在只是能在日志里看到体积）
+- **离线测试自动化**：目前离线能力靠手工跑真实浏览器验证，可以引入 Playwright 把它变成 CI 里的一步
+- **预取**：鼠标悬停导航时预取统计页，消掉首次进入的那一下等待
 
 ## License
 
