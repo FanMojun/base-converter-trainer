@@ -38,7 +38,7 @@ const STEPS = [
 
 export default function Home() {
   return (
-    <div className="page home">
+    <div className="container page home">
       <section className="home__hero">
         <p className="badge badge--primary">Base Converter Trainer · v1.0</p>
         <h1 className="home__title">

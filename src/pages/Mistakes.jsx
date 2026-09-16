@@ -30,7 +30,7 @@ export default function Mistakes() {
   };
 
   return (
-    <div className="page">
+    <div className="container page">
       <header className="page__header">
         <div>
           <h1 className="page__title">错题本</h1>

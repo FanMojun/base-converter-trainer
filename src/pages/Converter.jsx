@@ -11,7 +11,7 @@ const REFERENCE = [
 
 export default function Converter() {
   return (
-    <div className="page">
+    <div className="container page">
       <header className="page__header">
         <div>
           <h1 className="page__title">进制转换器</h1>

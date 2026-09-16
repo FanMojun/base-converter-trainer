@@ -86,7 +86,9 @@ button {
 }
 
 .page {
-  padding: var(--space-7) 0 var(--space-8);
+  /* 只负责纵向间距，横向留白交给 .container，避免 padding 简写互相覆盖 */
+  padding-top: var(--space-7);
+  padding-bottom: var(--space-8);
 }
 
 .page__header {

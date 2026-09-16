@@ -24,7 +24,7 @@ export default function Dashboard() {
   const recentMistakes = mistakes.slice(0, 3);
 
   return (
-    <div className="page">
+    <div className="container page">
       <header className="page__header">
         <div>
           <h1 className="page__title">学习统计</h1>

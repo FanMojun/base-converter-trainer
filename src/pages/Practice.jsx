@@ -66,7 +66,7 @@ export default function Practice() {
   const sessionAccuracy = session.answered === 0 ? 0 : Math.round((session.correct / session.answered) * 100);
 
   return (
-    <div className="page">
+    <div className="container page">
       <header className="page__header">
         <div>
           <h1 className="page__title">随机练习</h1>
