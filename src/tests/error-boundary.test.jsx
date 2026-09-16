@@ -23,6 +23,13 @@ function Boom() {
   throw new Error('测试用异常');
 }
 
+/** 模拟按需加载的分包取不到（离线未缓存 / 发版后旧资源被删） */
+function chunkError(message) {
+  return function BrokenChunk() {
+    throw new TypeError(message);
+  };
+}
+
 beforeEach(() => {
   // React 会把捕获到的异常再打一遍到控制台，这里静音，避免污染测试输出
   vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -32,6 +39,9 @@ beforeEach(() => {
     configurable: true,
     value: { reload: vi.fn() },
   });
+
+  // jsdom 默认 navigator.onLine 为 true，需要时由用例自己改写
+  Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: true });
 });
 
 describe('错误边界 · 单元行为', () => {
@@ -106,6 +116,62 @@ describe('错误边界 · 单元行为', () => {
     expect(call).toBeDefined();
     expect(call[1]).toBeInstanceOf(Error);
     expect(call[1].message).toBe('测试用异常');
+  });
+});
+
+describe('错误边界 · 区分失败原因', () => {
+  const FAILED_IMPORT = 'Failed to fetch dynamically imported module: /assets/Dashboard-x.js';
+  const BrokenChunk = chunkError(FAILED_IMPORT);
+
+  it('离线且分包没缓存时，告诉用户联网访问一次即可', () => {
+    Object.defineProperty(window.navigator, 'onLine', { configurable: true, value: false });
+
+    render(
+      <ErrorBoundary>
+        <BrokenChunk />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByText('这个页面还没有离线缓存')).toBeInTheDocument();
+    expect(screen.getByRole('alert').textContent).toContain('联网后打开一次');
+  });
+
+  it('分包取不到但不确定是否离线时，把两种可能都说清楚', () => {
+    render(
+      <ErrorBoundary>
+        <BrokenChunk />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByText('页面资源没能加载')).toBeInTheDocument();
+
+    const text = screen.getByRole('alert').textContent;
+
+    expect(text).toContain('网络断了');
+    expect(text).toContain('发布了新版本');
+  });
+
+  it('认得 Vite 取样式失败时报的错（真断网时最先撞上的就是它）', () => {
+    const BrokenCss = chunkError('Unable to preload CSS for /assets/Dashboard-x.css');
+
+    render(
+      <ErrorBoundary>
+        <BrokenCss />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByText('页面资源没能加载')).toBeInTheDocument();
+  });
+
+  it('普通渲染异常不会被误判成资源问题', () => {
+    render(
+      <ErrorBoundary>
+        <Boom />
+      </ErrorBoundary>,
+    );
+
+    expect(screen.getByText('这个页面出问题了')).toBeInTheDocument();
+    expect(screen.queryByText('页面资源没能加载')).not.toBeInTheDocument();
   });
 });
 

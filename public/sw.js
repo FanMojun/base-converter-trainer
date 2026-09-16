@@ -11,11 +11,12 @@
  * 这里统一用相对自身的路径（而不是写死 `/`），
  * 使「根路径部署」和「子路径部署」（GitHub Pages 的 /<repo>/）共用同一份代码。
  *
- * 注意：构建产物文件名带 hash，因此不需要在安装时预缓存全部资源，
- * 首次访问后按需缓存即可满足「基础离线访问」。
+ * 关于预缓存：构建产物的文件名带 hash，没法写死，所以安装时从 index.html 里
+ * 现读现取。这一条很关键 —— 只缓存 HTML 而不缓存它引用的 JS/CSS，
+ * 用户第一次访问后断网只能得到一个打不开的外壳（实践验证过）。
  */
 
-const CACHE_VERSION = 'bct-v2';
+const CACHE_VERSION = 'bct-v3';
 
 /** 应用根目录（即本文件所在目录），两种部署方式下都能自动算对 */
 const SCOPE_ROOT = new URL('./', self.location).href;
@@ -26,18 +27,67 @@ function asset(path) {
 }
 
 const SHELL_INDEX = asset('index.html');
-const APP_SHELL = [SCOPE_ROOT, SHELL_INDEX, asset('manifest.webmanifest'), asset('favicon.svg')];
+
+/** 与构建产物无关的固定外壳资源 */
+const STATIC_SHELL = [SCOPE_ROOT, asset('manifest.webmanifest'), asset('favicon.svg')];
+
+/**
+ * 从 HTML 里挑出同源的 script / link 引用。
+ * 覆盖 <script src>、<link rel="stylesheet">、<link rel="modulepreload">、图标与清单。
+ */
+function collectReferencedAssets(html) {
+  const urls = new Set();
+  const pattern = /<(?:script|link)\b[^>]*?\b(?:src|href)="([^"]+)"/gi;
+
+  let match = pattern.exec(html);
+
+  while (match !== null) {
+    const absolute = new URL(match[1], SCOPE_ROOT);
+
+    if (absolute.origin === self.location.origin) {
+      urls.add(absolute.href);
+    }
+
+    match = pattern.exec(html);
+  }
+
+  return [...urls];
+}
+
+/**
+ * 预缓存。单个资源失败不影响整体安装，因此逐项处理而不是 addAll。
+ * index.html 用 no-cache 请求，避免升级 SW 时又拿到旧的外壳。
+ */
+async function precache() {
+  const cache = await caches.open(CACHE_VERSION);
+
+  await Promise.allSettled(STATIC_SHELL.map((url) => cache.add(url)));
+
+  let html = '';
+
+  try {
+    const response = await fetch(new Request(SHELL_INDEX, { cache: 'no-cache' }));
+
+    if (response.ok) {
+      html = await response.clone().text();
+      await cache.put(SHELL_INDEX, response);
+    }
+  } catch (error) {
+    console.warn('[SW] 预缓存 index.html 失败，稍后按需缓存', error);
+  }
+
+  const assets = collectReferencedAssets(html);
+  const results = await Promise.allSettled(assets.map((url) => cache.add(url)));
+  const failed = results.filter((result) => result.status === 'rejected').length;
+
+  // 正常情况下不往控制台写东西；预缓存不完整才值得提醒，因为那会直接影响离线可用性
+  if (failed > 0) {
+    console.warn(`[SW] 预缓存不完整：${failed}/${assets.length} 项构建产物获取失败`);
+  }
+}
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches
-      .open(CACHE_VERSION)
-      .then((cache) => cache.addAll(APP_SHELL))
-      .then(() => self.skipWaiting())
-      .catch((error) => {
-        console.warn('[SW] 预缓存失败，稍后按需缓存', error);
-      }),
-  );
+  event.waitUntil(precache().then(() => self.skipWaiting()));
 });
 
 self.addEventListener('activate', (event) => {
@@ -60,7 +110,7 @@ self.addEventListener('fetch', (event) => {
 
   if (url.origin !== self.location.origin) return;
 
-  // 页面导航：网络优先
+  // 页面导航：网络优先，离线时回退到缓存的外壳
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
