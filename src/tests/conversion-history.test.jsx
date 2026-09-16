@@ -3,13 +3,16 @@ import { describe, expect, it } from 'vitest';
 
 import {
   CONVERSIONS_STORAGE_KEY,
+  CONVERSION_TOTAL_STORAGE_KEY,
   MISTAKES_STORAGE_KEY,
   STATS_STORAGE_KEY,
+  readConversionTotal,
   readConversions,
   readStatTile,
   renderApp,
   seedStorage,
 } from './test-utils.jsx';
+import { MAX_CONVERSION_RECORDS } from '../context/StatsContext';
 
 /**
  * 转换历史测试。
@@ -187,7 +190,118 @@ describe('转换历史 · 统计页展示', () => {
   });
 });
 
+describe('转换历史 · 总次数与列表上限', () => {
+  /*
+   * 「总转换次数」曾经直接取记录列表的长度，而列表有 MAX_CONVERSION_RECORDS
+   * 条上限，于是转过 60 次之后卡片会一直显示 50 —— 一个看起来完全正常的假数字。
+   * 下面这组用例就是这条修复的证据。
+   */
+  const buildRecords = (count) =>
+    Array.from({ length: count }, (_, index) => ({
+      id: `c_${index}`,
+      input: String(index + 1),
+      fromBase: 10,
+      toBase: 2,
+      result: '1',
+      timestamp: Date.now() - index * 1000,
+    }));
+
+  it('记录达到上限后，总次数继续增长，列表停在上限', async () => {
+    seedStorage({
+      [CONVERSIONS_STORAGE_KEY]: buildRecords(MAX_CONVERSION_RECORDS),
+      [CONVERSION_TOTAL_STORAGE_KEY]: 60,
+    });
+
+    const { container } = renderApp({ route: '/dashboard' });
+
+    await screen.findByRole('heading', { level: 1, name: '学习统计' });
+
+    expect(readStatTile('总转换次数').querySelector('.stat-tile__value')).toHaveTextContent(/^60$/);
+    expect(container.querySelectorAll('.conversion-list li')).toHaveLength(5);
+    expect(screen.getByText('共 60 次，仅显示最新 5 条')).toBeInTheDocument();
+  });
+
+  it('计数与列表分别落库，互不覆盖', async () => {
+    const { user } = renderApp({ route: '/converter' });
+
+    await convertOnce(user, { input: '101010' });
+
+    expect(readConversions()).toHaveLength(1);
+    expect(readConversionTotal()).toBe(1);
+  });
+
+  it('连点两次相同转换只让总次数加一', async () => {
+    const { user } = renderApp({ route: '/converter' });
+
+    await convertOnce(user, { input: '101010' });
+    await user.click(screen.getByRole('button', { name: '转换' }));
+
+    expect(readConversions()).toHaveLength(1);
+    expect(readConversionTotal()).toBe(1);
+  });
+
+  it('记录被清空过、只剩总数时，不会声称「仅显示最新 5 条」', async () => {
+    seedStorage({
+      [CONVERSIONS_STORAGE_KEY]: [],
+      [CONVERSION_TOTAL_STORAGE_KEY]: 60,
+    });
+
+    renderApp({ route: '/dashboard' });
+
+    await screen.findByRole('heading', { level: 1, name: '学习统计' });
+
+    expect(readStatTile('总转换次数').querySelector('.stat-tile__value')).toHaveTextContent(/^60$/);
+    expect(screen.getByText('共 60 次')).toBeInTheDocument();
+    expect(screen.queryByText(/仅显示最新/)).not.toBeInTheDocument();
+  });
+
+  it('记录不足 5 条时同样不写「仅显示最新 5 条」', async () => {
+    seedStorage({
+      [CONVERSIONS_STORAGE_KEY]: buildRecords(3),
+      [CONVERSION_TOTAL_STORAGE_KEY]: 3,
+    });
+
+    renderApp({ route: '/dashboard' });
+
+    await screen.findByRole('heading', { level: 1, name: '学习统计' });
+
+    expect(screen.getByText('共 3 次')).toBeInTheDocument();
+    expect(screen.queryByText(/仅显示最新/)).not.toBeInTheDocument();
+  });
+
+  it('老数据没有计数键时，用已有记录条数兜底而不是从 0 开始', async () => {
+    seedStorage({ [CONVERSIONS_STORAGE_KEY]: buildRecords(3) });
+
+    renderApp({ route: '/dashboard' });
+
+    await screen.findByRole('heading', { level: 1, name: '学习统计' });
+
+    expect(readStatTile('总转换次数').querySelector('.stat-tile__value')).toHaveTextContent(/^3$/);
+  });
+});
+
 describe('转换历史 · 与重置联动', () => {
+  it('只用过转换器、没做过题时，重置按钮依然可点', async () => {
+    seedStorage({
+      [CONVERSIONS_STORAGE_KEY]: [
+        { id: 'c_1', input: '1010', fromBase: 2, toBase: 16, result: 'A', timestamp: Date.now() },
+      ],
+      [CONVERSION_TOTAL_STORAGE_KEY]: 1,
+    });
+
+    const { user } = renderApp({ route: '/dashboard' });
+
+    const resetButton = await screen.findByRole('button', { name: '重置学习数据' });
+
+    expect(resetButton).toBeEnabled();
+
+    await user.click(resetButton);
+    await user.click(screen.getByRole('button', { name: '确认清空' }));
+
+    expect(readConversions()).toEqual([]);
+    expect(readConversionTotal()).toBe(0);
+  });
+
   it('重置学习数据会一并清空转换历史与错题', async () => {
     seedStorage({
       [CONVERSIONS_STORAGE_KEY]: [

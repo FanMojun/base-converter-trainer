@@ -4,7 +4,7 @@
 
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-5-646cff?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Vitest](https://img.shields.io/badge/Vitest-148%20tests%20passed-6da544?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-169%20tests%20passed-6da544?logo=vitest&logoColor=white)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Deploy](https://github.com/FanMojun/base-converter-trainer/actions/workflows/deploy.yml/badge.svg)](https://github.com/FanMojun/base-converter-trainer/actions/workflows/deploy.yml)
@@ -44,7 +44,7 @@
 | **进制转换器** | 二进制 / 八进制 / 十二进制 / 十进制 / 十六进制任意互转；支持大小写混输、空格与下划线自动忽略；一键交换输入与目标进制；结果可复制 |
 | **随机练习** | 随机生成数值 + 源进制 + 目标进制，三档难度（入门 / 进阶 / 挑战）；提交即时判题，附「源进制 → 十进制 → 目标进制」解析 |
 | **学习统计** | 总转换次数、总练习次数、正确次数、错误次数、正确率、当前连对、历史最高连对；练习数据按天聚合 |
-| **转换历史** | 转换器每次成功转换都会记录「输入值 → 结果」与所用进制，统计页展示总次数与最近 5 条；重复提交同一组参数不会重复计数 |
+| **转换历史** | 转换器每次成功转换都会记录「输入值 → 结果」与所用进制；记录列表最多保留最近 50 条，统计页的**总次数不受这个上限影响**（单独计数）；重复提交同一组参数不会重复计数 |
 | **数据可视化** | Recharts 每日练习量堆叠柱状图 + 正确率折线图，另有最近 30 天明细表 |
 | **错题本** | 答错自动收录，保留原题 / 你的答案 / 正确答案 / 十进制值；支持一键重练、单条移除、清空（二次确认） |
 | **PWA** | 可安装到桌面；安装后第一次访问就写入缓存，断网也能打开（见下方「PWA 与离线」的范围说明） |
@@ -55,10 +55,10 @@
 
 | 选择 | 为什么是这个 |
 | --- | --- |
-| **React 18 + Context** | 五个页面共用同一份学习数据，而写入来自多个入口（转换页、首页内嵌转换器、练习页）。把写入收口到 `StatsProvider` 一处，比每个页面各自读写 `localStorage` 更不容易出现口径不一致 |
+| **React 18 + Context** | 各页面共用同一份学习数据，而写入来自多个入口（转换页、首页内嵌转换器、练习页）。把写入收口到 `StatsProvider` 一处，比每个页面各自读写 `localStorage` 更不容易出现口径不一致 |
 | **Vite 5** | 开发态用原生 ESM，改样式即刻可见；构建时能把 react、图表库、统计页拆成独立文件，统计页的图表库不进首屏 |
 | **JavaScript（不上 TypeScript）** | 数据处理的正确性集中在 `utils/` 的纯函数里，已由测试覆盖；类型注解无法覆盖「localStorage 里的数据是上一版本的」这类问题，那部分改由存储层的结构校验兜底（见设计要点 4） |
-| **React Router 6** | 需要真实 URL —— 五个页面可分享、可前进后退，而不是靠组件状态切换 |
+| **React Router 6** | 需要真实 URL —— 六个页面可分享、可前进后退，而不是靠组件状态切换 |
 | **Recharts 2** | 声明式、跟 React 渲染模型一致；只在统计页用得到，因此单独拆包并懒加载 |
 | **原生 CSS** | 样式规模只有三个文件，引入框架的收益不抵构建与心智成本；用 CSS 变量统一设计令牌，明暗主题只需换一组变量 |
 | **Vitest 2 + jsdom + Testing Library** | 与 Vite 共用同一份配置和转换链，不需要额外配 babel/jest 映射；测试可以像用户那样点击、输入、切换进制，而不是只断言渲染出的字符串 |
@@ -107,7 +107,8 @@ src/
 │   ├── Converter.jsx
 │   ├── Practice.jsx
 │   ├── Dashboard.jsx    # 唯一被懒加载的路由
-│   └── Mistakes.jsx
+│   ├── Mistakes.jsx
+│   └── Algorithm.jsx    # 实现说明：BigInt 精度对比、转换流水线、边界情况
 ├── utils/
 │   ├── converter.js     # 进制转换引擎（纯函数，无 React 依赖）
 │   ├── generator.js     # 出题与判题（纯函数）
@@ -130,6 +131,7 @@ src/
     ├── converter.test.js     # 转换引擎（纯逻辑）
     ├── generator.test.js     # 出题与判题（纯逻辑）
     ├── app.test.jsx          # 路由与导航（真实点击）
+    ├── algorithm-page.test.jsx
     ├── converter-page.test.jsx
     ├── practice-page.test.jsx
     ├── mistakes.test.jsx
@@ -141,9 +143,9 @@ src/
 
 ## 设计要点
 
-### 1. 一套流水线，而不是 4×3 个转换函数
+### 1. 一套流水线，而不是 5×4 个转换函数
 
-进制之间两两组合有 12 种方向。如果为每种组合单独实现，代码会迅速失控。因此所有转换都走同一条路径：
+进制之间两两组合有 20 种方向（5 个进制、有向且不含自己转自己）。如果为每种组合单独实现，代码会迅速失控。因此所有转换都走同一条路径：
 
 ```
 输入进制字符串 ──parseToDecimal──▶ 十进制 (BigInt) ──decimalToBase──▶ 目标进制字符串
@@ -177,14 +179,14 @@ src/
 
 统计页是唯一被懒加载的路由（`React.lazy` + `Suspense`）。理由很直接：图表库体积是首屏全部代码的两倍多，而用户不一定会打开统计页。
 
-首屏 JS 的 gzip 体积因此从约 171 KB 降到约 65 KB：
+首屏 JS 的 gzip 体积因此从约 178 KB 降到约 69 KB（数字取自 `npm run build` 的输出，只统计 JS，口径与下方提交记录一致；首屏样式另有 5.3 KB）：
 
 | 分包（gzip） | 首屏 | 进入统计页时 |
 | --- | --- | --- |
 | `react` 53.4 KB | 需要 | 已加载 |
-| `index` 11.9 KB + 样式 4.9 KB | 需要 | 已加载 |
+| `index` 15.8 KB | 需要 | 已加载 |
 | `charts` 105.6 KB | **不需要** | 按需加载 |
-| `Dashboard` 3.0 KB + 样式 0.5 KB | **不需要** | 按需加载 |
+| `Dashboard` 2.9 KB | **不需要** | 按需加载 |
 
 配合两个决定：
 
@@ -206,17 +208,18 @@ npm test
 ```
  ✓ src/tests/converter.test.js           (31)
  ✓ src/tests/generator.test.js           (24)
+ ✓ src/tests/conversion-history.test.jsx (20)
+ ✓ src/tests/converter-page.test.jsx     (17)
  ✓ src/tests/practice-page.test.jsx      (15)
- ✓ src/tests/converter-page.test.jsx     (14)
- ✓ src/tests/conversion-history.test.jsx (13)
- ✓ src/tests/storage.test.jsx            (13)
  ✓ src/tests/error-boundary.test.jsx     (13)
+ ✓ src/tests/storage.test.jsx            (13)
+ ✓ src/tests/algorithm-page.test.jsx     (11)
  ✓ src/tests/dashboard.test.jsx          (9)
  ✓ src/tests/app.test.jsx                (8)
  ✓ src/tests/mistakes.test.jsx           (8)
 
- Test Files  10 passed (10)
-      Tests  148 passed (148)
+ Test Files  11 passed (11)
+      Tests  169 passed (169)
 ```
 
 测试分成两类，各管各的事：
@@ -231,7 +234,7 @@ npm test
 - 出题约束：题面在源进制下合法、源与目标进制必然不同、难度对应的位数与进制池、题目 id 不重复
 - 判题容错：大小写、前导零、空答案、目标进制非法字符
 
-**真实交互（其余 93 项）**
+**真实交互（其余 114 项）**
 用 `jsdom` + Testing Library 把整棵应用渲染出来，然后像用户那样操作：
 
 - 在输入框打字、点「转换」、切换进制、点「交换」，然后断言页面上出现的结果

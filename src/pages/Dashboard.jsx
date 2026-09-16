@@ -9,6 +9,9 @@ import { formatTime } from '../utils/format';
 /** 最近转换记录只展示最新若干条，完整历史没有查看价值，还占地方。 */
 const RECENT_CONVERSION_LIMIT = 5;
 
+/** 统计页的错题摘要只展示最新若干条。 */
+const RECENT_MISTAKE_LIMIT = 3;
+
 export default function Dashboard() {
   const { stats, mistakes, conversions, conversionTotal, accuracy, resetAll } = useStats();
   const [isConfirmingReset, setIsConfirmingReset] = useState(false);
@@ -25,7 +28,7 @@ export default function Dashboard() {
       }));
   }, [stats.history]);
 
-  const recentMistakes = mistakes.slice(0, 3);
+  const recentMistakes = mistakes.slice(0, RECENT_MISTAKE_LIMIT);
   const recentConversions = conversions.slice(0, RECENT_CONVERSION_LIMIT);
 
   return (
@@ -41,7 +44,7 @@ export default function Dashboard() {
         <div className="page__header-actions">
           {isConfirmingReset ? (
             <>
-              <span className="muted">清空全部统计数据与错题？</span>
+              <span className="muted">清空统计、错题与转换记录？</span>
               <button
                 type="button"
                 className="btn btn--sm btn--danger"
@@ -65,7 +68,12 @@ export default function Dashboard() {
               type="button"
               className="btn btn--ghost"
               onClick={() => setIsConfirmingReset(true)}
-              disabled={stats.total === 0 && mistakes.length === 0}
+              /*
+               * 判据必须覆盖 resetAll 真正会清掉的每一份数据。
+               * 只判断练习与错题的话，一个「只用转换器、没做过题」的用户
+               * 会看到一个点不动的按钮，而他的转换记录确实还在。
+               */
+              disabled={stats.total === 0 && mistakes.length === 0 && conversionTotal === 0}
             >
               重置学习数据
             </button>
@@ -80,7 +88,13 @@ export default function Dashboard() {
           <h2 className="card__title">最近转换记录</h2>
           <p className="card__hint">
             共 {conversionTotal} 次
-            {conversionTotal > RECENT_CONVERSION_LIMIT
+            {/*
+             * 「仅显示最新 N 条」这句话只对「确实被截断了」的情况成立。
+             * 判据要看列表本身有多少条，不能用总次数 ——
+             * 累计 60 次但记录被清空过时，总数是 60、列表是空的，
+             * 那时候写「仅显示最新 5 条」就是在描述不存在的东西。
+             */}
+            {conversions.length > RECENT_CONVERSION_LIMIT
               ? `，仅显示最新 ${RECENT_CONVERSION_LIMIT} 条`
               : ''}
           </p>
@@ -156,7 +170,10 @@ export default function Dashboard() {
           <header className="chart-card__head">
             <h2 className="card__title">最近错题</h2>
             <p className="card__hint">
-              共 {mistakes.length} 条{mistakes.length > 0 ? '，仅显示最新 3 条' : ''}
+              共 {mistakes.length} 条
+              {mistakes.length > RECENT_MISTAKE_LIMIT
+                ? `，仅显示最新 ${RECENT_MISTAKE_LIMIT} 条`
+                : ''}
             </p>
           </header>
 

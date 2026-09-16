@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 
 import AppShell from '../components/AppShell.jsx';
 import StatsProvider from '../context/StatsProvider.jsx';
-import { MISTAKES_STORAGE_KEY, STATS_STORAGE_KEY, CONVERSIONS_STORAGE_KEY } from '../context/StatsContext';
+import { MISTAKES_STORAGE_KEY, STATS_STORAGE_KEY, CONVERSIONS_STORAGE_KEY, CONVERSION_TOTAL_STORAGE_KEY } from '../context/StatsContext';
 
 /**
  * 渲染整棵应用（全局状态 + 路由 + 外壳）。
@@ -49,6 +49,14 @@ export function readConversions() {
 }
 
 /**
+ * 读取转换总次数。
+ * 它与记录列表是两个键：列表有上限，计数没有，所以断言时不能互相替代。
+ */
+export function readConversionTotal() {
+  return JSON.parse(window.localStorage.getItem(CONVERSION_TOTAL_STORAGE_KEY));
+}
+
+/**
  * 读取转换结果。
  * `<output>` 的结构是「数值 + 表示进制的下标」，下标是子元素，
  * 所以取第一个子节点即可拿到数值本身；二进制结果带四位分组空格，一并去掉。
@@ -84,4 +92,9 @@ export function readStatTile(label) {
   return labelNode?.closest('.stat-tile') ?? null;
 }
 
-export { CONVERSIONS_STORAGE_KEY, MISTAKES_STORAGE_KEY, STATS_STORAGE_KEY };
+export {
+  CONVERSIONS_STORAGE_KEY,
+  CONVERSION_TOTAL_STORAGE_KEY,
+  MISTAKES_STORAGE_KEY,
+  STATS_STORAGE_KEY,
+};

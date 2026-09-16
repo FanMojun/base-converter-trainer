@@ -4,6 +4,7 @@ import { createContext } from 'react';
 export const STATS_STORAGE_KEY = 'bct:stats:v1';
 export const MISTAKES_STORAGE_KEY = 'bct:mistakes:v1';
 export const CONVERSIONS_STORAGE_KEY = 'bct:conversions:v1';
+export const CONVERSION_TOTAL_STORAGE_KEY = 'bct:conversion-total:v1';
 
 /** 错题本最多保留的条数，防止 localStorage 无限膨胀。 */
 export const MAX_MISTAKE_RECORDS = 100;
@@ -64,8 +65,12 @@ export function accuracyOf(stats) {
   return Math.round(((stats.correct ?? 0) / total) * 100);
 }
 
-/** 把任意输入收敛成非负整数，非法值一律当 0。 */
-function toCount(value) {
+/**
+ * 把任意输入收敛成非负整数，非法值一律当 0。
+ * 统计里的每个计数、以及单独存放的转换总次数都走这里，
+ * 保证「读出来的一定是个能参与运算的数字」这一条只有一处实现。
+ */
+export function sanitizeCount(value) {
   return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
 }
 
@@ -78,18 +83,18 @@ function toCount(value) {
 export function sanitizeStats(value) {
   if (!value || typeof value !== 'object') return createEmptyStats();
 
-  const total = toCount(value.total);
-  const correct = Math.min(toCount(value.correct), total);
-  const streak = toCount(value.streak);
+  const total = sanitizeCount(value.total);
+  const correct = Math.min(sanitizeCount(value.correct), total);
+  const streak = sanitizeCount(value.streak);
 
   const history = (Array.isArray(value.history) ? value.history : [])
     .filter((item) => item && typeof item.date === 'string')
     .map((item) => {
-      const dayTotal = toCount(item.total);
+      const dayTotal = sanitizeCount(item.total);
       return {
         date: item.date,
         total: dayTotal,
-        correct: Math.min(toCount(item.correct), dayTotal),
+        correct: Math.min(sanitizeCount(item.correct), dayTotal),
       };
     })
     .slice(-HISTORY_WINDOW_DAYS);
@@ -99,7 +104,7 @@ export function sanitizeStats(value) {
     correct,
     wrong: total - correct,
     streak,
-    bestStreak: Math.max(toCount(value.bestStreak), streak),
+    bestStreak: Math.max(sanitizeCount(value.bestStreak), streak),
     history,
   };
 }
