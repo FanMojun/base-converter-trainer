@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import App from './App.jsx';
+import registerServiceWorker from './pwa/registerServiceWorker.js';
 import './styles/tokens.css';
 import './styles/base.css';
 
@@ -16,3 +17,6 @@ createRoot(container).render(
     <App />
   </StrictMode>,
 );
+
+// 生产环境下注册 Service Worker，提供安装能力与离线访问
+registerServiceWorker();
