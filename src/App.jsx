@@ -2,8 +2,11 @@ import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import Navbar from './components/Navbar.jsx';
+import StatsProvider from './context/StatsProvider.jsx';
 import Home from './pages/Home.jsx';
 import Converter from './pages/Converter.jsx';
+import Practice from './pages/Practice.jsx';
+import Mistakes from './pages/Mistakes.jsx';
 
 import './styles/pages.css';
 
@@ -20,27 +23,31 @@ function ScrollToTop() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ScrollToTop />
-      <a className="skip-link" href="#main">
-        跳到主要内容
-      </a>
-      <Navbar />
+    <StatsProvider>
+      <BrowserRouter>
+        <ScrollToTop />
+        <a className="skip-link" href="#main">
+          跳到主要内容
+        </a>
+        <Navbar />
 
-      <main id="main" className="app-main">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/converter" element={<Converter />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </main>
+        <main id="main" className="app-main">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/converter" element={<Converter />} />
+            <Route path="/practice" element={<Practice />} />
+            <Route path="/mistakes" element={<Mistakes />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </main>
 
-      <footer className="app-footer">
-        <div className="container app-footer__inner">
-          <p className="muted">Base Converter Trainer · 进制转换与算法训练平台</p>
-          <p className="muted">React + Vite · 数据保存在本地浏览器</p>
-        </div>
-      </footer>
-    </BrowserRouter>
+        <footer className="app-footer">
+          <div className="container app-footer__inner">
+            <p className="muted">Base Converter Trainer · 进制转换与算法训练平台</p>
+            <p className="muted">React + Vite · 数据保存在本地浏览器</p>
+          </div>
+        </footer>
+      </BrowserRouter>
+    </StatsProvider>
   );
 }

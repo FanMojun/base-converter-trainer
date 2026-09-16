@@ -1,0 +1,120 @@
+.practice-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.practice-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.practice-card__arrow {
+  color: var(--color-text-muted);
+}
+
+.practice-card__prompt {
+  color: var(--color-text-soft);
+}
+
+.practice-card__source {
+  font-size: var(--text-3xl);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--color-text);
+  word-break: break-all;
+}
+
+.practice-card__source sub {
+  font-size: 0.42em;
+  color: var(--color-text-muted);
+  margin-left: 4px;
+}
+
+.practice-card__form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-3);
+}
+
+.practice-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-4);
+  border-top: 1px dashed var(--color-border);
+}
+
+/* --------------------------------------------------------- 判题反馈 */
+
+.practice-feedback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  animation: feedback-in var(--transition-base);
+}
+
+@keyframes feedback-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.practice-feedback.is-correct {
+  background: var(--color-success-soft);
+  color: var(--color-success);
+}
+
+.practice-feedback.is-wrong {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+
+.practice-feedback__verdict {
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+
+.practice-feedback__line {
+  color: var(--color-text-soft);
+}
+
+.practice-feedback.is-correct .practice-feedback__line,
+.practice-feedback.is-wrong .practice-feedback__line {
+  color: var(--color-text-soft);
+}
+
+.practice-feedback__explain {
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--color-surface) 80%, transparent);
+  color: var(--color-text);
+  word-break: break-all;
+}
+
+.practice-feedback__tip {
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+}
+
+@media (max-width: 560px) {
+  .practice-card__form {
+    grid-template-columns: 1fr;
+  }
+
+  .practice-card__source {
+    font-size: var(--text-2xl);
+  }
+}
