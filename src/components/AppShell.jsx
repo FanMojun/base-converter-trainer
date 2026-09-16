@@ -1,12 +1,19 @@
-import { useEffect } from 'react';
+import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import Navbar from './Navbar.jsx';
 import Home from '../pages/Home.jsx';
 import Converter from '../pages/Converter.jsx';
 import Practice from '../pages/Practice.jsx';
-import Dashboard from '../pages/Dashboard.jsx';
 import Mistakes from '../pages/Mistakes.jsx';
+
+/**
+ * 统计页按需加载。
+ * 它是唯一依赖 Recharts 的页面，而图表库占了整个首屏体积的大头；
+ * 静态 import 会让首页也必须先下载完图表库才能渲染，
+ * 拆成动态 import 之后，只有真正进入统计页才会去拉这个包。
+ */
+const Dashboard = lazy(() => import('../pages/Dashboard.jsx'));
 
 /** 路由切换后回到页面顶部，避免在长页面之间跳转时停在半中间。 */
 function ScrollToTop() {
@@ -17,6 +24,17 @@ function ScrollToTop() {
   }, [pathname]);
 
   return null;
+}
+
+/** 动态加载期间的占位。用 role="status" 让读屏软件也能感知到页面正在切换。 */
+function RouteFallback() {
+  return (
+    <div className="container page">
+      <p className="muted" role="status">
+        页面加载中……
+      </p>
+    </div>
+  );
 }
 
 /**
@@ -34,14 +52,16 @@ export default function AppShell() {
       <Navbar />
 
       <main id="main" className="app-main">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/converter" element={<Converter />} />
-          <Route path="/practice" element={<Practice />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/mistakes" element={<Mistakes />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <Suspense fallback={<RouteFallback />}>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/converter" element={<Converter />} />
+            <Route path="/practice" element={<Practice />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/mistakes" element={<Mistakes />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
       </main>
 
       <footer className="app-footer">

@@ -25,7 +25,11 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
-    // 图表库体积较大，单独拆包，首屏加载更快
+    // react 与 recharts 各自成块：
+    //   - react 首屏必需，单独成块有利于长期缓存
+    //   - recharts 只被懒加载的统计页引用，独立成块后不会进入首屏
+    // 注意：拆包本身不等于按需加载 —— manualChunks 只决定「怎么分文件」，
+    // 静态引用照样会被首屏一起下载。真正的按需来自 AppShell 里的 React.lazy。
     rollupOptions: {
       output: {
         manualChunks: {

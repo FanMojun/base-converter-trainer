@@ -1,6 +1,15 @@
 import '@testing-library/jest-dom/vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
 import { afterEach, beforeEach, vi } from 'vitest';
+
+/**
+ * 默认的异步断言超时是 1 秒。
+ * 统计页是懒加载的，第一次进入时要在测试进程里现转换并加载
+ * Dashboard 与 Recharts 两个包，冷启动经常超过 1 秒，
+ * 表现为「单独跑这个文件能过、整体跑就超时」。
+ * 这里放宽到 5 秒，断言本身仍然是确定性的，只是给首次加载留足时间。
+ */
+configure({ asyncUtilTimeout: 5000 });
 
 /**
  * 测试环境补丁。
