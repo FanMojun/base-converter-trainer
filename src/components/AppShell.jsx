@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
+import ErrorBoundary from './ErrorBoundary.jsx';
 import Navbar from './Navbar.jsx';
 import Home from '../pages/Home.jsx';
 import Converter from '../pages/Converter.jsx';
@@ -43,6 +44,8 @@ function RouteFallback() {
  * 也能在测试里用 MemoryRouter 直接渲染。
  */
 export default function AppShell() {
+  const { pathname } = useLocation();
+
   return (
     <>
       <ScrollToTop />
@@ -52,16 +55,24 @@ export default function AppShell() {
       <Navbar />
 
       <main id="main" className="app-main">
-        <Suspense fallback={<RouteFallback />}>
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/converter" element={<Converter />} />
-            <Route path="/practice" element={<Practice />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/mistakes" element={<Mistakes />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
+        {/*
+          错误边界包在 Suspense 外层：这样既能接住页面渲染时抛出的异常，
+          也能接住懒加载的 chunk 拉取失败。
+          key 用当前路由地址 —— 某个页面崩了之后，用户点到别的页面能立刻恢复，
+          而不必先刷新整页。
+        */}
+        <ErrorBoundary key={pathname}>
+          <Suspense fallback={<RouteFallback />}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/converter" element={<Converter />} />
+              <Route path="/practice" element={<Practice />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/mistakes" element={<Mistakes />} />
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </main>
 
       <footer className="app-footer">
