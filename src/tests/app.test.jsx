@@ -1,76 +1,104 @@
-import { renderToString } from 'react-dom/server';
-import { MemoryRouter } from 'react-router-dom';
+import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import AppShell from '../components/AppShell.jsx';
-import StatsProvider from '../context/StatsProvider.jsx';
+import { readConverterOutput, renderApp } from './test-utils.jsx';
 
-/**
- * 整机冒烟测试：把整棵组件树在五个路由下各渲染一遍。
- * 单元测试只能保证工具函数正确，这里用来兜住「引入写错、Hook 用错、
- * 某个页面在特定路由下直接崩掉」这类只有整树渲染才会暴露的问题。
- */
-function renderAt(pathname) {
-  return renderToString(
-    <StatsProvider>
-      <MemoryRouter initialEntries={[pathname]}>
-        <AppShell />
-      </MemoryRouter>
-    </StatsProvider>,
-  );
+/** 首页的一级标题，用来判断「当前在首页」。 */
+function homeHeading() {
+  return screen.getByRole('heading', { level: 1, name: /把进制转换/ });
 }
 
-const ROUTES = ['/', '/converter', '/practice', '/dashboard', '/mistakes'];
+describe('应用外壳 · 路由', () => {
+  it('默认进入首页', () => {
+    renderApp();
 
-describe('AppShell 整机渲染', () => {
-  it.each(ROUTES)('%s 路由可以正常渲染出内容', (route) => {
-    const html = renderAt(route);
-
-    expect(html).toContain('Base Converter');
-    expect(html.length).toBeGreaterThan(500);
+    expect(homeHeading()).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument();
   });
 
-  it('首页包含四个模块入口', () => {
-    const html = renderAt('/');
+  it('点击导航可以在五个页面之间切换', async () => {
+    const { user } = renderApp();
 
-    expect(html).toContain('进制转换器');
-    expect(html).toContain('随机练习');
-    expect(html).toContain('学习数据');
-    expect(html).toContain('错题本');
+    const cases = [
+      { link: '转换器', heading: '进制转换器' },
+      { link: '练习', heading: '随机练习' },
+      { link: '统计', heading: '学习统计' },
+      { link: '错题本', heading: '错题本' },
+      { link: '首页', heading: /把进制转换/ },
+    ];
+
+    for (const item of cases) {
+      await user.click(screen.getByRole('link', { name: item.link }));
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: item.heading }),
+      ).toBeInTheDocument();
+    }
   });
 
-  it('转换页渲染出进制选择与输入框', () => {
-    const html = renderAt('/converter');
+  it('未知路径会回到首页，而不是渲染出一片空白', () => {
+    renderApp({ route: '/not-exist' });
 
-    expect(html).toContain('converter-input');
-    expect(html).toContain('目标进制');
-    expect(html).toContain('输出字符');
+    expect(homeHeading()).toBeInTheDocument();
   });
 
-  it('练习页渲染出题目与答案输入框', () => {
-    const html = renderAt('/practice');
+  it('页面之间跳转时把滚动位置重置到顶部', async () => {
+    const { user } = renderApp();
 
-    expect(html).toContain('practice-answer');
-    expect(html).toContain('提交答案');
-    expect(html).toContain('难度选择');
+    await user.click(screen.getByRole('link', { name: '练习' }));
+
+    expect(window.scrollTo).toHaveBeenCalled();
+  });
+});
+
+describe('应用外壳 · 无障碍入口', () => {
+  it('提供跳到主要内容的快捷链接', () => {
+    renderApp();
+
+    const skipLink = screen.getByRole('link', { name: '跳到主要内容' });
+
+    expect(skipLink).toHaveAttribute('href', '#main');
   });
 
-  it('统计页在没有数据时展示空状态而不是空图表', () => {
-    expect(renderAt('/dashboard')).toContain('还没有趋势数据');
+  it('移动端导航菜单可以展开与收起', async () => {
+    const { user } = renderApp();
+    const toggle = screen.getByRole('button', { name: '展开导航菜单' });
+
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+
+    await user.click(toggle);
+
+    const expanded = screen.getByRole('button', { name: '收起导航菜单' });
+
+    expect(expanded).toHaveAttribute('aria-expanded', 'true');
+
+    await user.click(expanded);
+
+    expect(screen.getByRole('button', { name: '展开导航菜单' })).toHaveAttribute(
+      'aria-expanded',
+      'false',
+    );
+  });
+});
+
+describe('首页 · 内嵌转换器', () => {
+  it('不跳页就能直接完成一次转换', async () => {
+    const { user, container } = renderApp();
+
+    await user.selectOptions(screen.getByLabelText('输入进制'), '16');
+    await user.selectOptions(screen.getByLabelText('目标进制'), '2');
+    await user.type(screen.getByLabelText('输入数值'), 'FF');
+    await user.click(screen.getByRole('button', { name: '转换' }));
+
+    // FF₁₆ = 11111111₂，四位分组后带空格，helper 会去掉
+    expect(readConverterOutput(container)).toBe('11111111');
   });
 
-  it('错题本在没有记录时给出引导', () => {
-    expect(renderAt('/mistakes')).toContain('错题本还是空的');
-  });
+  it('从首页跳转到练习页开始做题', async () => {
+    const { user } = renderApp();
 
-  // <Navigate> 的跳转发生在浏览器端，静态渲染时只会渲染出空的路由出口，
-  // 因此这里断言「外壳完整且不抛错」，真正的重定向由浏览器行为保证。
-  it('未知路径不会白屏，应用外壳仍然完整', () => {
-    expect(() => renderAt('/not-exist')).not.toThrow();
+    await user.click(screen.getByRole('link', { name: '开始练习' }));
 
-    const html = renderAt('/not-exist');
-
-    expect(html).toContain('app-main');
-    expect(html).toContain('Base Converter Trainer');
+    expect(screen.getByRole('heading', { level: 1, name: '随机练习' })).toBeInTheDocument();
   });
 });

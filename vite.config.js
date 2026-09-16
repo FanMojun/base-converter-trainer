@@ -36,8 +36,13 @@ export default defineConfig({
     },
   },
   test: {
-    environment: 'node',
+    // 组件测试要模拟真实用户行为（点击、输入、选择），必须有真实 DOM。
+    // 纯函数测试在 jsdom 下同样能跑，所以统一用一套环境，不为单个文件再开分支。
+    environment: 'jsdom',
+    setupFiles: ['./src/tests/setup.js'],
     include: ['src/tests/**/*.test.{js,jsx}'],
     reporters: 'default',
+    // 每个用例结束后还原 spy / mock，避免相互污染
+    restoreMocks: true,
   },
 });

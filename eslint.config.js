@@ -40,4 +40,16 @@ export default [
       globals: { ...globals.serviceworker },
     },
   },
+  {
+    // 测试目录的运行环境：jsdom + Vitest，且不参与 HMR。
+    // react-refresh 那条规则是针对「组件文件必须是热更新边界」的，
+    // 测试工具文件本来就同时导出渲染函数和断言辅助函数，在这里不适用。
+    files: ['src/tests/**/*.{js,jsx}'],
+    plugins: {
+      'react-refresh': reactRefresh,
+    },
+    rules: {
+      'react-refresh/only-export-components': 'off',
+    },
+  },
 ];
