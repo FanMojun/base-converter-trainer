@@ -6,6 +6,7 @@ import StatsProvider from './context/StatsProvider.jsx';
 import Home from './pages/Home.jsx';
 import Converter from './pages/Converter.jsx';
 import Practice from './pages/Practice.jsx';
+import Dashboard from './pages/Dashboard.jsx';
 import Mistakes from './pages/Mistakes.jsx';
 
 import './styles/pages.css';
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/" element={<Home />} />
             <Route path="/converter" element={<Converter />} />
             <Route path="/practice" element={<Practice />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/mistakes" element={<Mistakes />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
