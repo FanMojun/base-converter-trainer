@@ -7,12 +7,19 @@
 [![Vitest](https://img.shields.io/badge/Vitest-66%20tests%20passed-6da544?logo=vitest&logoColor=white)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-在线演示-2ea44f?logo=googlechrome&logoColor=white)](https://eefc7669b40241b5b85731383f41627b.app.workbuddy.host)
 
 进制转换是一个「看懂只要五分钟，练熟要练一百题」的知识点。这个项目把**转换工具**、**随机出题**、**学习数据**、**错题复盘**放进同一个 PWA 里，形成一个能自我强化的练习闭环。
 
 ## 在线 Demo
 
-> 暂未部署。部署后请把地址填在这一行（Vercel / Netlify / GitHub Pages 均可，`npm run build` 产物在 `dist/`）。
+**https://eefc7669b40241b5b85731383f41627b.app.workbuddy.host**
+
+无需安装，直接打开即可使用全部功能。支持手机浏览器访问，也可以「添加到主屏幕」当作 App 使用。
+
+> 部署环境以 `npm run build && npm run preview -- --host 0.0.0.0 --port <port>` 作为单端口 HTTP 服务运行。
+> 同时 `vite.config.js` 里已为 `server` / `preview` 配好 `host: '0.0.0.0'` 与 `allowedHosts: true`，
+> 可直接搬到 Vercel / Netlify / 任意容器平台（`npm run build` 产物在 `dist/`）。
 
 ## 项目截图
 
@@ -206,7 +213,7 @@ docs: update README                   # 文档与截图
 - **数据导出**：导出错题与统计数据为 JSON / CSV，支持云端同步
 - **可达性**：补充键盘导航细节与屏幕阅读器文案，目标 WCAG 2.1 AA
 - **性能**：Recharts 单独拆包已生效，可进一步按路由懒加载统计页
-- **部署**：接入 CI（lint + test + build）并部署到静态托管，补上在线 Demo 链接
+- **部署**：接入 CI（lint + test + build）后自动发布，免去手动构建再上线
 
 ## License
 

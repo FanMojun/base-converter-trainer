@@ -10,9 +10,16 @@ export default defineConfig({
     port: 5173,
     // 默认不自动打开浏览器，交给使用者自己控制
     open: false,
+    // 绑定全部网卡并放行任意 Host 头：本地开发默认只监听 localhost，
+    // 部署到容器 / 反向代理后面时会因为 Host 校验被拒（Blocked request）
+    host: '0.0.0.0',
+    allowedHosts: true,
   },
   preview: {
     port: 4173,
+    // 线上以 `vite preview` 作为单端口 HTTP 服务，同样需要放行代理域名
+    host: '0.0.0.0',
+    allowedHosts: true,
   },
   build: {
     outDir: 'dist',
