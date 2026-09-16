@@ -310,6 +310,19 @@ button {
   overflow-x: auto;
 }
 
+/*
+ * 手机上让代码块折行，而不是横向滚动。
+ * 这里贴的都是说明性片段（不是要复制的可运行文件），而等宽字体下 60 个字符的语句
+ * 在 390px 屏上必定超出内容盒；overflow-x: auto 又没有任何可见提示，
+ * 读者只会以为这行代码就写到这里为止。折行会破坏对齐，但不会骗人。
+ */
+@media (max-width: 640px) {
+  .code {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+}
+
 /* 只保留横向分隔线的表格，避免又变成「卡片里塞表格」 */
 .spec-table {
   width: 100%;
@@ -372,6 +385,11 @@ button {
  *
  * 只给确实放不下的表加这个修饰类：并排本来放得下的短表格继续用表格，
  * 摊开反而会把页面拉得很长。
+ *
+ * caption 必须一起改：表格变成 block 之后，caption 仍是 table-caption 盒子，
+ * 而脱离了表格的 caption 会按「收紧到最小内容宽度」来算 —— 实测只剩 27px 宽、
+ * 261px 高，一句话竖着排成一个字一行。这种坏法不会报错、也撑不破页面，
+ * 只有在小屏上看得见，所以和表格本体写在同一组里。
  */
 @media (max-width: 640px) {
   .spec-table--stack thead {
@@ -379,6 +397,7 @@ button {
   }
 
   .spec-table--stack,
+  .spec-table--stack caption,
   .spec-table--stack tbody,
   .spec-table--stack tr,
   .spec-table--stack th,

@@ -1,3 +1,6 @@
+import { readFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+
 import { screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
@@ -171,6 +174,70 @@ describe('实现说明 · 窄屏下摊开的表格', () => {
         });
       });
     });
+  });
+});
+
+/**
+ * 读样式表原文。
+ * 这里不用 import.meta.url：测试跑在 jsdom 环境里，那个 URL 不是 file: 协议，
+ * readFile 会直接拒收。测试的工作目录就是项目根目录。
+ */
+function readStylesheet() {
+  return readFile(resolve(process.cwd(), 'src/styles/base.css'), 'utf8');
+}
+
+/**
+ * 按大括号配对取出某条 640px 断点里的规则，避免用正则去啃嵌套结构。
+ * 同一断点在样式表里不止一处，所以按「里面有没有摊开表格」来挑。
+ */
+function mobileBlock(css, marker) {
+  for (const match of css.matchAll(/@media \(max-width: 640px\)/g)) {
+    let depth = 0;
+
+    for (let index = css.indexOf('{', match.index); index < css.length; index += 1) {
+      if (css[index] === '{') depth += 1;
+      else if (css[index] === '}') {
+        depth -= 1;
+        if (depth === 0) {
+          const block = css.slice(match.index, index + 1);
+          if (block.includes(marker)) return block;
+          break;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+describe('实现说明 · 窄屏样式的约定', () => {
+  /**
+   * jsdom 不算布局，caption 被压成一个字一行的坏法在单元测试里量不到，
+   * 只能把约定写在源头：摊开表格那条规则必须连 caption 一起改成块级。
+   * 漏掉它时 caption 仍是 table-caption 盒子，脱离表格之后宽度会收紧到最小内容
+   * 宽度（实测 27px 宽、261px 高），而且不报错、也不撑破页面，只有真机上看得见。
+   */
+  it('摊开表格的规则里，caption 与表格本体一起变成块级', async () => {
+    const css = await readStylesheet();
+    const block = mobileBlock(css, '.spec-table--stack');
+
+    expect(block, '没有找到 640px 以下处理摊开表格的样式块').toBeTruthy();
+
+    const blockLevelSelectors = [...block.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .filter(([, , body]) => body.includes('display: block'))
+      .flatMap(([, selectors]) => selectors.split(','))
+      .map((selector) => selector.trim());
+
+    expect(blockLevelSelectors).toContain('.spec-table--stack caption');
+  });
+
+  /** 同理：代码块在手机上要折行，横向滚动没有任何可见提示，等于把后半行藏起来。 */
+  it('代码块在窄屏下改为折行，而不是横向滚动', async () => {
+    const css = await readStylesheet();
+    const block = mobileBlock(css, '.code');
+
+    expect(block, '没有找到 640px 以下处理代码块的样式块').toBeTruthy();
+    expect(block).toContain('white-space: pre-wrap');
   });
 });
 
