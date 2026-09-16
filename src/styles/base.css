@@ -344,6 +344,34 @@ button {
   font-weight: 600;
 }
 
+/* 同一串输入的另一种（错误）算法结果，和正确值需要一眼分得开 */
+.spec-table__wrong {
+  color: var(--color-danger);
+}
+
+.spec-table__caption {
+  padding-bottom: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--text-xs);
+  text-align: left;
+  letter-spacing: 0.04em;
+}
+
+/* 行首的说明列，是 th 但不该有表头的分量 */
+.spec-table tbody th {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* 正文里指代函数名或字面量用的行内代码 */
+.code-inline {
+  padding: 0.1em 0.35em;
+  background: var(--color-surface-muted);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+}
+
 /* 需要单独指出的内容，例如校验层真实抛出来的报错原文 */
 .note {
   margin-top: var(--space-4);

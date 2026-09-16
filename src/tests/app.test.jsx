@@ -18,7 +18,7 @@ describe('应用外壳 · 路由', () => {
     expect(screen.getByRole('navigation', { name: '主导航' })).toBeInTheDocument();
   });
 
-  it('点击导航可以在五个页面之间切换', async () => {
+  it('点击导航可以在六个页面之间切换', async () => {
     const { user } = renderApp();
 
     const cases = [
@@ -26,6 +26,7 @@ describe('应用外壳 · 路由', () => {
       { link: '练习', heading: '随机练习' },
       { link: '统计', heading: '学习统计' },
       { link: '错题本', heading: '错题本' },
+      { link: '实现说明', heading: '实现说明' },
       { link: '首页', heading: HOME_HEADING },
     ];
 

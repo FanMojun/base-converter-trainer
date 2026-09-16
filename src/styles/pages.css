@@ -240,6 +240,23 @@
   margin-top: var(--space-7);
 }
 
+/*
+ * 实现说明页：整页是阅读材料而不是工具，所以限制行长（约 78 字符），
+ * 段落之间用 3rem 的大间距分开，靠留白而不是卡片来分组。
+ */
+.algorithm-page {
+  display: grid;
+  gap: var(--space-7);
+  margin-top: var(--space-6);
+  max-width: 78ch;
+}
+
+/* 首块紧贴页头，再画一条分隔线就重复了 */
+.algorithm-page > .panel:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
 .reference-list {
   display: flex;
   flex-direction: column;

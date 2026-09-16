@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { to: '/practice', label: '练习' },
   { to: '/dashboard', label: '统计' },
   { to: '/mistakes', label: '错题本' },
+  { to: '/algorithm', label: '实现说明' },
 ];
 
 export default function Navbar() {

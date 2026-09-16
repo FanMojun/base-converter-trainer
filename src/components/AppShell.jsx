@@ -7,6 +7,7 @@ import Home from '../pages/Home.jsx';
 import Converter from '../pages/Converter.jsx';
 import Practice from '../pages/Practice.jsx';
 import Mistakes from '../pages/Mistakes.jsx';
+import Algorithm from '../pages/Algorithm.jsx';
 
 /**
  * 统计页按需加载。
@@ -69,6 +70,7 @@ export default function AppShell() {
               <Route path="/practice" element={<Practice />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/mistakes" element={<Mistakes />} />
+              <Route path="/algorithm" element={<Algorithm />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </Suspense>
