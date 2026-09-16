@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import PracticeCard from '../components/PracticeCard.jsx';
 import useStats from '../hooks/useStats';
+import { accuracyOf } from '../context/StatsContext';
 import { DEFAULT_DIFFICULTY, DIFFICULTY_LEVELS, checkAnswer, generateQuestion } from '../utils/generator';
 
 export default function Practice() {
@@ -59,7 +60,7 @@ export default function Practice() {
     setIsRetry(false);
   };
 
-  const sessionAccuracy = session.answered === 0 ? 0 : Math.round((session.correct / session.answered) * 100);
+  const sessionAccuracy = accuracyOf(session.correct, session.answered);
 
   return (
     <div className="container page">

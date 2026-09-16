@@ -58,11 +58,19 @@ export function upsertHistory(history, correct, date = new Date()) {
   return next.slice(-HISTORY_WINDOW_DAYS);
 }
 
-/** 正确率（0-100 的整数），没有作答记录时返回 0。 */
-export function accuracyOf(stats) {
-  const total = stats?.total ?? 0;
-  if (total === 0) return 0;
-  return Math.round(((stats.correct ?? 0) / total) * 100);
+/**
+ * 正确率（0-100 的整数）。
+ *
+ * 这是「正确率」这个词在整个项目里的唯一定义。此前它被原样抄了四遍 ——
+ * 总览、图表、每日明细、练习会话各一份 —— 只要有一处调整了取整方式
+ * 或分母为 0 时的返回值，同一个页面上的两个百分比就会互相矛盾。
+ *
+ * 分母为 0 表示「还没有可算的数据」，返回 0 而不是 NaN。
+ */
+export function accuracyOf(correct, total) {
+  if (!Number.isFinite(total) || total <= 0) return 0;
+  if (!Number.isFinite(correct) || correct <= 0) return 0;
+  return Math.round((correct / total) * 100);
 }
 
 /**

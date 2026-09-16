@@ -1,8 +1,7 @@
 {
   "name": "base-converter-trainer",
   "private": true,
-  "version": "1.0.0",
-  "description": "进制转换与算法训练平台：二进制 / 八进制 / 十二进制 / 十六进制互转、随机练习、错题本与学习数据可视化。",
+  "description": "进制转换工具与练习：2 / 8 / 10 / 12 / 16 进制互转、随机出题、错题本与本地学习统计。中间值用 BigInt 计算，大整数转换不丢精度。",
   "type": "module",
   "keywords": [
     "react",

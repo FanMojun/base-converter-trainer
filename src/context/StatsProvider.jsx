@@ -142,7 +142,7 @@ export default function StatsProvider({ children }) {
       mistakes,
       conversions,
       conversionTotal,
-      accuracy: accuracyOf(stats),
+      accuracy: accuracyOf(stats.correct, stats.total),
       recordAttempt,
       recordConversion,
       removeMistake,

@@ -12,6 +12,8 @@ import {
   YAxis,
 } from 'recharts';
 
+import { accuracyOf } from '../context/StatsContext';
+
 import './Statistics.css';
 
 /** 从 CSS 变量里读图表配色，让图表跟随明暗主题一起切换。 */
@@ -93,7 +95,7 @@ export default function Statistics({ stats, accuracy, conversionTotal = 0 }) {
         total: item.total,
         correct: item.correct,
         wrong: item.total - item.correct,
-        accuracy: item.total === 0 ? 0 : Math.round((item.correct / item.total) * 100),
+        accuracy: accuracyOf(item.correct, item.total),
       })),
     [stats.history],
   );

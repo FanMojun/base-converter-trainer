@@ -11,12 +11,17 @@
  * 这里统一用相对自身的路径（而不是写死 `/`），
  * 使「根路径部署」和「子路径部署」（GitHub Pages 的 /<repo>/）共用同一份代码。
  *
- * 关于预缓存：构建产物的文件名带 hash，没法写死，所以安装时从 index.html 里
- * 现读现取。这一条很关键 —— 只缓存 HTML 而不缓存它引用的 JS/CSS，
- * 用户第一次访问后断网只能得到一个打不开的外壳（实践验证过）。
+ * 关于预缓存：构建产物的文件名带 hash，没法写死，所以从两个地方现读现取：
+ *   1. index.html —— 首屏直接引用的 JS/CSS、图标、清单文件；
+ *   2. asset-manifest.json —— 构建时输出的完整产物清单。
+ * 两条都要。只用第一条的话，懒加载页面（统计页、实现说明页）的 chunk
+ * 不在 HTML 里出现，用户没点进去过就断网，点进去只能看到「页面资源没能加载」；
+ * 而只用第二条的话，public/ 下的图标与清单文件不会被列进去，因为那类文件
+ * 不经过打包器。实测过：只缓存 HTML 而不缓存 JS，用户首次访问后断网
+ * 只能得到一个打不开的外壳。
  */
 
-const CACHE_VERSION = 'bct-v3';
+const CACHE_VERSION = 'bct-v4';
 
 /** 应用根目录（即本文件所在目录），两种部署方式下都能自动算对 */
 const SCOPE_ROOT = new URL('./', self.location).href;
@@ -27,6 +32,7 @@ function asset(path) {
 }
 
 const SHELL_INDEX = asset('index.html');
+const ASSET_MANIFEST = asset('asset-manifest.json');
 
 /** 与构建产物无关的固定外壳资源 */
 const STATIC_SHELL = [SCOPE_ROOT, asset('manifest.webmanifest'), asset('favicon.svg')];
@@ -55,6 +61,26 @@ function collectReferencedAssets(html) {
 }
 
 /**
+ * 读取构建产物清单，拿到全部 JS 与 CSS 的地址。
+ * 清单读不到不算致命：HTML 里直接引用的那部分仍然会被缓存，
+ * 只是懒加载页面在离线时会打不开，所以值得往控制台留一句话。
+ */
+async function collectBuildAssets() {
+  try {
+    const response = await fetch(new Request(ASSET_MANIFEST, { cache: 'no-cache' }));
+
+    if (!response.ok) return [];
+
+    const manifest = await response.json();
+
+    return (manifest.files ?? []).map((file) => asset(file));
+  } catch (error) {
+    console.warn('[SW] 读取 asset-manifest.json 失败，本次只缓存 HTML 直接引用的资源', error);
+    return [];
+  }
+}
+
+/**
  * 预缓存。单个资源失败不影响整体安装，因此逐项处理而不是 addAll。
  * index.html 用 no-cache 请求，避免升级 SW 时又拿到旧的外壳。
  */
@@ -76,7 +102,8 @@ async function precache() {
     console.warn('[SW] 预缓存 index.html 失败，稍后按需缓存', error);
   }
 
-  const assets = collectReferencedAssets(html);
+  // 两条来源合并去重：HTML 里的引用覆盖 public/ 下的文件，清单覆盖懒加载 chunk
+  const assets = [...new Set([...collectReferencedAssets(html), ...(await collectBuildAssets())])];
   const results = await Promise.allSettled(assets.map((url) => cache.add(url)));
   const failed = results.filter((result) => result.status === 'rejected').length;
 

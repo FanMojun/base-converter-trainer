@@ -51,7 +51,6 @@ export class ConversionError extends Error {
   }
 }
 
-/** 判断是否为平台支持的进制。 */
 export function isSupportedBase(base) {
   return SUPPORTED_BASES.includes(Number(base));
 }
@@ -235,4 +234,16 @@ export function groupDigits(text, size = 4) {
   if (!Number.isInteger(size) || size <= 0 || value.length <= size) return value;
 
   return value.replace(new RegExp(`(.{${size}})`, 'g'), '$1 ').trim();
+}
+
+/**
+ * 按进制决定分组长度：二进制 4 位一组（1 位十六进制正好对应 4 位二进制），
+ * 其它进制不分组。
+ *
+ * 这条规则原本在结果输出、练习题干、错题本三处各写了一遍
+ * `base === 2 ? 4 : 0`。三处任意一处改动都会让同一种数字在不同页面
+ * 显示成不同样子，所以收成一个函数。
+ */
+export function groupDigitsForBase(text, base) {
+  return groupDigits(text, Number(base) === 2 ? 4 : 0);
 }

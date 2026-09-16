@@ -1,10 +1,39 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
+/**
+ * 把所有构建产物的文件名写成一份清单。
+ *
+ * Service Worker 需要在安装阶段就知道「该预缓存哪些文件」，可是带 hash 的
+ * 文件名没法写死，而它不能自己去猜。Vite 自带的 build.manifest 是够用的，
+ * 但它落在 .vite/ 这个隐藏目录下 —— 静态托管对点开头路径的处理并不统一
+ * （GitHub Pages 走 Jekyll 时就会直接忽略）。这里干脆输出一个普通文件。
+ *
+ * 清单只列 JS 与 CSS：图片、图标、清单文件由 sw.js 另外从 index.html 里取，
+ * public/ 下的文件本来就不经过打包器，进不了这份清单。
+ */
+function buildAssetManifest() {
+  return {
+    name: 'bct:asset-manifest',
+    generateBundle(_options, bundle) {
+      const files = Object.values(bundle)
+        .map((item) => item.fileName)
+        .filter((name) => /\.(?:js|css)$/.test(name))
+        .sort();
+
+      this.emitFile({
+        type: 'asset',
+        fileName: 'asset-manifest.json',
+        source: `${JSON.stringify({ files }, null, 2)}\n`,
+      });
+    },
+  };
+}
+
 // Vite 与 Vitest 共用同一份配置：这里把测试相关字段一并写进来，
 // 避免再维护一份 vitest.config.js。
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), buildAssetManifest()],
   // GitHub Pages 把站点挂在 /<repo>/ 子路径下，用环境变量注入；
   // 本地开发与容器部署不传则为根路径，两种部署方式共用一份配置。
   base: process.env.VITE_BASE_PATH || '/',

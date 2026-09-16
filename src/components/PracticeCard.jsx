@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import { DIGIT_SETS, baseName, explainConversion, groupDigits } from '../utils/converter';
+import { DIGIT_SETS, baseName, explainConversion, groupDigitsForBase } from '../utils/converter';
 
 import './PracticeCard.css';
 
@@ -73,7 +73,7 @@ export default function PracticeCard({ question, feedback, isRetry = false, onSu
       </p>
 
       <p className="practice-card__source mono">
-        {groupDigits(question.source, question.fromBase === 2 ? 4 : 0)}
+        {groupDigitsForBase(question.source, question.fromBase)}
         <sub>{question.fromBase}</sub>
       </p>
 

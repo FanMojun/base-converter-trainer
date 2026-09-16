@@ -10,6 +10,7 @@ import {
   explainConversion,
   findInvalidCharacters,
   groupDigits,
+  groupDigitsForBase,
   isSupportedBase,
   normalizeInput,
   parseToDecimal,
@@ -196,6 +197,20 @@ describe('底层工具函数', () => {
     expect(groupDigits('101', 4)).toBe('101');
     expect(groupDigits('1010101010', 4)).toBe('1010 1010 10');
     expect(groupDigits('2A', 0)).toBe('2A');
+  });
+
+  it('groupDigitsForBase 只给二进制分组（1 位十六进制 = 4 位二进制）', () => {
+    expect(groupDigitsForBase('10101010', 2)).toBe('1010 1010');
+    // 其它进制不分组：短串本来就好读，硬分组只会让数字看起来断了
+    expect(groupDigitsForBase('11111111', 16)).toBe('11111111');
+    expect(groupDigitsForBase('2025', 10)).toBe('2025');
+    expect(groupDigitsForBase('755', 8)).toBe('755');
+    expect(groupDigitsForBase('1B2A', 12)).toBe('1B2A');
+  });
+
+  it('groupDigitsForBase 传进来的进制是字符串时也能判断', () => {
+    // select 的 value 是字符串，中间经过几层组件传递后类型并不统一
+    expect(groupDigitsForBase('10101010', '2')).toBe('1010 1010');
   });
 
   it('toSubscript 用于渲染进制下标', () => {

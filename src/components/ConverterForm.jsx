@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import BaseSelect from './BaseSelect.jsx';
 import useStats from '../hooks/useStats';
-import { ConversionError, DIGIT_SETS, convert, groupDigits, toSubscript } from '../utils/converter';
+import { ConversionError, DIGIT_SETS, convert, groupDigitsForBase, toSubscript } from '../utils/converter';
 
 import './ConverterForm.css';
 
@@ -187,7 +187,7 @@ export default function ConverterForm({ initialFrom = 2, initialTo = 16 }) {
           </div>
 
           <output className="converter__output mono">
-            {groupDigits(result.result, result.toBase === 2 ? 4 : 0)}
+            {groupDigitsForBase(result.result, result.toBase)}
             <sub>{result.toBase}</sub>
           </output>
 

@@ -4,7 +4,7 @@
 
 [![React](https://img.shields.io/badge/React-18-61dafb?logo=react&logoColor=white)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-5-646cff?logo=vite&logoColor=white)](https://vitejs.dev/)
-[![Vitest](https://img.shields.io/badge/Vitest-169%20tests%20passed-6da544?logo=vitest&logoColor=white)](https://vitest.dev/)
+[![Vitest](https://img.shields.io/badge/Vitest-174%20tests%20passed-6da544?logo=vitest&logoColor=white)](https://vitest.dev/)
 [![PWA](https://img.shields.io/badge/PWA-installable-5a0fc8?logo=pwa&logoColor=white)](https://web.dev/progressive-web-apps/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 [![Deploy](https://github.com/FanMojun/base-converter-trainer/actions/workflows/deploy.yml/badge.svg)](https://github.com/FanMojun/base-converter-trainer/actions/workflows/deploy.yml)
@@ -106,9 +106,9 @@ src/
 │   ├── Home.jsx         # 首屏 + 内嵌转换器
 │   ├── Converter.jsx
 │   ├── Practice.jsx
-│   ├── Dashboard.jsx    # 唯一被懒加载的路由
+│   ├── Dashboard.jsx    # 懒加载：唯一依赖图表库的页面
 │   ├── Mistakes.jsx
-│   └── Algorithm.jsx    # 实现说明：BigInt 精度对比、转换流水线、边界情况
+│   └── Algorithm.jsx    # 懒加载：实现说明（BigInt 精度对比、转换流水线、边界情况）
 ├── utils/
 │   ├── converter.js     # 进制转换引擎（纯函数，无 React 依赖）
 │   ├── generator.js     # 出题与判题（纯函数）
@@ -177,23 +177,29 @@ src/
 
 ### 5. 首屏只装首屏需要的东西，页面崩了不牵连外壳
 
-统计页是唯一被懒加载的路由（`React.lazy` + `Suspense`）。理由很直接：图表库体积是首屏全部代码的两倍多，而用户不一定会打开统计页。
+两个路由用 `React.lazy` + `Suspense` 拆了出去：
 
-首屏 JS 的 gzip 体积因此从约 178 KB 降到约 69 KB（数字取自 `npm run build` 的输出，只统计 JS，口径与下方提交记录一致；首屏样式另有 5.3 KB）：
+- **统计页** —— 图表库的 gzip 体积是首屏全部代码的 1.6 倍，而用户不一定会打开统计页；
+- **实现说明页** —— 一页纯阅读的参考资料，多数人整个使用过程里都不会点开，没有理由让它在首屏占位。
 
-| 分包（gzip） | 首屏 | 进入统计页时 |
+首屏 JS 的 gzip 体积因此是约 66.2 KB（数字取自 `npm run build` 的输出，只统计 JS，口径与下方提交记录一致；首屏样式另有 5.3 KB）：
+
+| 分包（gzip） | 首屏 | 何时加载 |
 | --- | --- | --- |
-| `react` 53.4 KB | 需要 | 已加载 |
-| `index` 15.8 KB | 需要 | 已加载 |
-| `charts` 105.6 KB | **不需要** | 按需加载 |
-| `Dashboard` 2.9 KB | **不需要** | 按需加载 |
+| `react` 53.4 KB | 需要 | 首屏 |
+| `index` 12.8 KB | 需要 | 首屏 |
+| `charts` 105.6 KB | **不需要** | 进入统计页时 |
+| `Dashboard` 2.9 KB | **不需要** | 进入统计页时 |
+| `Algorithm` 3.7 KB | **不需要** | 进入实现说明页时 |
+
+拆包本身不等于按需加载：`manualChunks` 只决定「怎么分文件」，静态 import 照样会被首屏一起下载，真正让分包延后的是 `React.lazy`。所以这部分在真实浏览器里核对过 —— 打开首页时只发起了 2 个 JS 请求（`index`、`react`），点击导航进入统计页才新增 `Dashboard` 与 `charts`，进入实现说明页才新增 `Algorithm`。
 
 配合两个决定：
 
 - **错误边界放在「路由出口」而不是最外层**。某个页面抛异常时，导航和页脚必须还活着，用户能点到别的页面去，而不是面对整片白屏。
 - **错误边界按路由地址重置**（`key={pathname}`）。切换页面即自动恢复，不需要用户手动刷新。
 
-这条边界不只是防渲染 bug。断网进入一个还没被缓存过的懒加载页面时，取分包会失败，用户看到的就是这个提示页 —— 比白屏可解释得多（离线能力的实测结果见下文「PWA 与离线」）。
+这条边界不只是防渲染 bug。分包的加载失败会直接抛到路由出口 —— 发版换了 hash、离线时缓存里又没有对应分包，都会走到这个提示页，比白屏可解释得多（离线场景的实测结果见下文「PWA 与离线」）。
 
 ### 6. 错误提示面向使用者
 
@@ -206,25 +212,25 @@ npm test
 ```
 
 ```
- ✓ src/tests/converter.test.js           (31)
+ ✓ src/tests/converter.test.js           (33)
  ✓ src/tests/generator.test.js           (24)
  ✓ src/tests/conversion-history.test.jsx (20)
  ✓ src/tests/converter-page.test.jsx     (17)
+ ✓ src/tests/storage.test.jsx            (16)
  ✓ src/tests/practice-page.test.jsx      (15)
  ✓ src/tests/error-boundary.test.jsx     (13)
- ✓ src/tests/storage.test.jsx            (13)
  ✓ src/tests/algorithm-page.test.jsx     (11)
  ✓ src/tests/dashboard.test.jsx          (9)
  ✓ src/tests/app.test.jsx                (8)
  ✓ src/tests/mistakes.test.jsx           (8)
 
  Test Files  11 passed (11)
-      Tests  169 passed (169)
+      Tests  174 passed (174)
 ```
 
 测试分成两类，各管各的事：
 
-**纯逻辑（`converter.test.js` / `generator.test.js`，55 项）**
+**纯逻辑（`converter.test.js` / `generator.test.js`，57 项）**
 不需要 DOM，直接断言函数输出。
 
 - 全进制往返一致性：2 / 8 / 10 / 12 / 16 两两组合共 25 组，`A → B → A` 结果必须一致
@@ -234,7 +240,7 @@ npm test
 - 出题约束：题面在源进制下合法、源与目标进制必然不同、难度对应的位数与进制池、题目 id 不重复
 - 判题容错：大小写、前导零、空答案、目标进制非法字符
 
-**真实交互（其余 114 项）**
+**真实交互（其余 117 项）**
 用 `jsdom` + Testing Library 把整棵应用渲染出来，然后像用户那样操作：
 
 - 在输入框打字、点「转换」、切换进制、点「交换」，然后断言页面上出现的结果
@@ -251,6 +257,7 @@ npm test
 
 - `public/manifest.webmanifest` 提供 `standalone` 显示模式与 any / maskable 图标
 - `public/sw.js` 策略：页面导航**网络优先 + 缓存回退**，静态资源**缓存优先 + 后台更新**，只处理同源 GET 请求
+- 构建时额外产出一份 `asset-manifest.json`（见 `vite.config.js` 里的 `buildAssetManifest`），列出全部 JS / CSS 的带 hash 文件名。Service Worker 安装时读它，把**所有分包**一起预缓存 —— 见下面「离线反而更难了」一节的由来
 - 开发环境不注册 Service Worker（避免干扰 HMR），验证离线请使用 `npm run build && npm run preview`
 - `npm run icons` 内置一个手写的最小 PNG 编码器生成图标，不需要 canvas / sharp 等原生依赖
 - Manifest 与 Service Worker 内部一律使用**相对路径**，因此根路径部署与子路径部署（GitHub Pages 的 `/<repo>/`）共用同一份代码，不需要为了换部署位置改路径
@@ -261,16 +268,29 @@ npm test
 
 > 顺带一个踩过的坑：只用 DevTools / CDP 的「Offline」开关测不准。它不一定作用到 Service Worker 自己发起的请求，于是断网重载「成功」了，其实是 Service Worker 照样联网把资源拿了回来。**把服务器真正停掉再刷新**，才是可信的断网测试。
 
-结论：
+结论（首次访问后立刻断网，五个页面逐个走一遍）：
 
 | 场景 | 结果 |
 | --- | --- |
-| 首次访问后立刻断网，打开首页 | ✅ 正常渲染 |
-| 断网后进入转换 / 练习 / 错题本 | ✅ 正常使用（数据本来就在 localStorage） |
-| 断网后进入统计页 | ⚠️ 显示「页面资源没能加载」提示页，不会白屏 |
-| 断网后刷新 | ✅ 外壳照常打开 |
+| 打开首页 | ✅ 正常渲染 |
+| 进入转换 / 练习 / 错题本 | ✅ 正常使用（数据本来就在 localStorage） |
+| 进入统计页 / 实现说明页 | ✅ 正常渲染 |
+| 刷新页面 | ✅ 外壳照常打开 |
 
-统计页之所以例外：它的图表库单独分包（约 106 KB gzip），只为「第一次访问就断网」这一种情况把它塞进预缓存并不划算。联网打开过一次统计页之后，该分包进入缓存，之后离线也能进。
+### 离线反而更难了：拆包与预缓存的矛盾
+
+按需加载还有个不显眼的代价。原先 Service Worker 只从 `index.html` 里读出它引用的文件来预缓存 —— 而懒加载页面的 chunk 根本不在 HTML 里出现。于是出现过这样一个真实的失败：
+
+```
+首次在线打开首页 → 关掉网络 → 点「统计」
+→ Unable to preload CSS for /assets/Dashboard-*.css
+```
+
+联网点开过一次统计页，分包就进了缓存，之后离线也能进；但**第一次访问就断网的用户，会看到错误边界兜住的提示页**。拆出实现说明页之后，同样的问题又被复制了一份。
+
+修法是让 Service Worker 从构建清单里取全量产物：`asset-manifest.json` 是构建时生成的，包含所有 JS / CSS 的带 hash 文件名，安装阶段一次性缓存完（本次实测首次访问后缓存 13 项，含三个懒加载分包）。HTML 解析那条路径保留着 —— `public/` 下的图标、清单文件不经过打包器，进不了产物清单，只能从 HTML 里取。
+
+装上这个之后，上表的「进入统计页 / 实现说明页」才真的是 ✅。
 
 失败时用户看到的是一个有解释的提示页而不是白屏 —— 错误边界会区分「离线未缓存」与「发版后旧资源失效」两种原因，这正是加上错误边界的实际收益。
 
@@ -312,6 +332,22 @@ feat: add error boundary                      # 单个页面抛异常会让整�
 refactor: tidy storage layer and drop dead code  # 存储层补结构校验；清掉「写了但没人用」的导出
 fix: make offline access actually work on first visit  # 真断网测试发现离线其实打不开，
                                                        # 此前看着能用是浏览器缓存在兜底
+```
+
+**第三轮：让项目看起来像人写的，而不是像生成的**
+
+这一轮的目标不是加功能，是去掉「AI 味」并补上工程细节：
+
+```
+refactor: rewrite UI copy in plain engineering tone      # 清掉「练成肌肉记忆」「形成闭环」
+                                                         # 这类营销腔，只留准确的功能描述
+fix: keep the browser tab title in sync with the page heading  # 标题还写着旧的名字
+refactor: break up card uniformity with document-style panels  # 33 处 .card 用同一套圆角+阴影，
+                                                               # 读起来像模板；另立一族朴素面板
+feat: add an implementation-notes page for the conversion engine  # 把 BigInt 精度、转换流水线、
+                                                                  # 边界情况摊开讲，数字全部现场计算
+fix: stop reporting the conversion record count as the total  # 记录列表有 50 条上限，超过之后
+                                                              # 「总转换次数」就永远停在 50
 ```
 
 ## 未来优化方向

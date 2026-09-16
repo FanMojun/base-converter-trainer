@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 
 import Statistics from '../components/Statistics.jsx';
 import useStats from '../hooks/useStats';
+import { accuracyOf } from '../context/StatsContext';
 import { baseName } from '../utils/converter';
 import { formatTime } from '../utils/format';
 
@@ -24,7 +25,7 @@ export default function Dashboard() {
       .reverse()
       .map((item) => ({
         ...item,
-        accuracy: item.total === 0 ? 0 : Math.round((item.correct / item.total) * 100),
+        accuracy: accuracyOf(item.correct, item.total),
       }));
   }, [stats.history]);
 

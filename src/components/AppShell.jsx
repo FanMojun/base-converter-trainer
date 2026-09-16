@@ -7,7 +7,6 @@ import Home from '../pages/Home.jsx';
 import Converter from '../pages/Converter.jsx';
 import Practice from '../pages/Practice.jsx';
 import Mistakes from '../pages/Mistakes.jsx';
-import Algorithm from '../pages/Algorithm.jsx';
 
 /**
  * 统计页按需加载。
@@ -16,6 +15,13 @@ import Algorithm from '../pages/Algorithm.jsx';
  * 拆成动态 import 之后，只有真正进入统计页才会去拉这个包。
  */
 const Dashboard = lazy(() => import('../pages/Dashboard.jsx'));
+
+/**
+ * 实现说明页同样按需加载。
+ * 它是一页纯阅读的参考资料，多数使用者在整个使用过程里都不会打开它，
+ * 没有任何理由让他们在首屏就为这 10 KB 付出下载时间。
+ */
+const Algorithm = lazy(() => import('../pages/Algorithm.jsx'));
 
 /** 路由切换后回到页面顶部，避免在长页面之间跳转时停在半中间。 */
 function ScrollToTop() {

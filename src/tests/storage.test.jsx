@@ -6,12 +6,40 @@ import {
   STATS_STORAGE_KEY,
   MAX_CONVERSION_RECORDS,
   MAX_MISTAKE_RECORDS,
+  accuracyOf,
   createEmptyStats,
   sanitizeConversions,
   sanitizeMistakes,
   sanitizeStats,
 } from '../context/StatsContext';
 import { readStats, renderApp, seedStorage } from './test-utils.jsx';
+
+/**
+ * 正确率的定义只有这一份实现，页面上四个位置都调它。
+ * 所以这里要把「分母为 0」「分子大于分母」「小数取整」这几种边角占住，
+ * 否则改坏了不会有任何页面报错，只会静静显示一个错的百分比。
+ */
+describe('accuracyOf：正确率的唯一定义', () => {
+  it('按「答对 ÷ 总数」四舍五入到整数', () => {
+    expect(accuracyOf(1, 3)).toBe(33);
+    expect(accuracyOf(2, 3)).toBe(67);
+    expect(accuracyOf(1, 2)).toBe(50);
+    expect(accuracyOf(7, 7)).toBe(100);
+  });
+
+  it('分母为 0 时返回 0，而不是 NaN 或 Infinity', () => {
+    expect(accuracyOf(0, 0)).toBe(0);
+    expect(accuracyOf(3, 0)).toBe(0);
+    expect(Number.isNaN(accuracyOf(0, 0))).toBe(false);
+  });
+
+  it('数据不完整时按 0 处理，不让脏数据变成 NaN 显示在卡片上', () => {
+    expect(accuracyOf(undefined, undefined)).toBe(0);
+    expect(accuracyOf(null, null)).toBe(0);
+    expect(accuracyOf('3', '4')).toBe(0);
+    expect(accuracyOf(-1, 10)).toBe(0);
+  });
+});
 
 describe('sanitizeStats：读取时的结构校验', () => {
   it('不是对象时直接回退到空结构', () => {

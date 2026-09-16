@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import useStats from '../hooks/useStats';
-import { baseName, groupDigits } from '../utils/converter';
+import { baseName, groupDigitsForBase } from '../utils/converter';
 import { formatTime } from '../utils/format';
 import { questionFromMistake } from '../utils/generator';
 
@@ -79,7 +79,7 @@ export default function Mistakes() {
               <div className="mistake-item__head">
                 <div className="mistake-item__question">
                   <span className="mono mistake-item__source">
-                    {groupDigits(record.source, record.fromBase === 2 ? 4 : 0)}
+                    {groupDigitsForBase(record.source, record.fromBase)}
                     <sub>{record.fromBase}</sub>
                   </span>
                   <span className="muted">
