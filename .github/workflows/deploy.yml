@@ -30,7 +30,12 @@ jobs:
       - name: 准备 Node 环境
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 必须 >= 22.22.2：测试用的 jsdom 30 依赖 undici 8，
+          # 而 undici 8 需要 Node >= 22.19，jsdom 30 本身声明 ^22.22.2。
+          # 之前写 20，CI 上 jsdom 直接抛
+          # "TypeError: webidl.util.markAsUncloneable is not a function"，
+          # 测试文件一个都收集不到（Test Files: no tests）。
+          node-version: '22'
           cache: npm
 
       - name: 安装依赖

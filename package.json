@@ -13,6 +13,9 @@
     "education"
   ],
   "license": "MIT",
+  "engines": {
+    "node": ">=22.22.2"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
