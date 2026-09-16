@@ -144,7 +144,7 @@ export default function Statistics({ stats, accuracy, conversionTotal = 0 }) {
           <section className="card chart-card">
             <header className="chart-card__head">
               <h2 className="card__title">正确率变化</h2>
-              <p className="card__hint">当天正确率，越平稳说明掌握得越扎实</p>
+              <p className="card__hint">当天答对数 ÷ 当天作答数</p>
             </header>
             <div className="chart-card__canvas">
               <ResponsiveContainer width="100%" height={260}>

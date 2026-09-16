@@ -208,7 +208,7 @@ describe('错误边界 · 与路由集成', () => {
     // 边界以路由地址为 key，换页面会重置错误状态
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
     expect(
-      await screen.findByRole('heading', { level: 1, name: /把进制转换/ }),
+      await screen.findByRole('heading', { level: 1, name: '进制转换练习工具' }),
     ).toBeInTheDocument();
   });
 

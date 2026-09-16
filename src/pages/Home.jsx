@@ -2,52 +2,51 @@ import { Link } from 'react-router-dom';
 
 import ConverterForm from '../components/ConverterForm.jsx';
 
-/** 配套的学习路径建议。 */
+/** 各模块入口。描述只写这个模块做什么，不写它能带来什么好处。 */
 const FEATURES = [
   {
     to: '/converter',
     title: '进制转换器',
-    desc: '二进制 / 八进制 / 十二进制 / 十六进制任意互转，统一走「输入进制 → 十进制 → 目标进制」流水线。',
+    desc: '2 / 8 / 10 / 12 / 16 进制任意互转，统一走「输入进制 → 十进制 → 目标进制」流水线。',
     tag: '工具',
   },
   {
     to: '/practice',
     title: '随机练习',
-    desc: '随机抽取数值、源进制与目标进制，提交即时判题，附逐步解析与下一题。',
+    desc: '随机抽取数值、源进制与目标进制，提交后立即判题，并给出十进制中间值的解析。',
     tag: '训练',
   },
   {
     to: '/dashboard',
-    title: '学习数据',
-    desc: '累计练习次数、正确率、连续答对等指标，配合图表观察自己的进步趋势。',
+    title: '学习统计',
+    desc: '练习次数、正确率、连续答对等指标，按天聚合后用柱状图与折线图展示。',
     tag: '统计',
   },
   {
     to: '/mistakes',
     title: '错题本',
-    desc: '自动收走答错的题目，随时回看原题、你的答案与正确答案，并一键重练。',
+    desc: '答错的题目自动收录，保留原题、你的答案与正确答案，可以直接带着原题重练。',
     tag: '复盘',
   },
 ];
 
 const STEPS = [
-  { title: '看一眼概念', desc: '在转换器里输入一个数，观察十进制中间值与目标进制结果的对应关系。' },
-  { title: '动手练几题', desc: '进入练习页，从入门难度开始，连续答对会累计连击。' },
-  { title: '回看错题', desc: '答错的题自动进入错题本，重练到能一眼反应出答案为止。' },
+  { title: '输入一个数', desc: '在转换器里输入数值，观察输入值、十进制中间值与目标进制结果的对应关系。' },
+  { title: '做几道题', desc: '进入练习页，从入门难度开始；提交后立刻能看到对错与解析。' },
+  { title: '回看错题', desc: '答错的题会带着你的原答案一起进入错题本，可以反复重练。' },
 ];
 
 export default function Home() {
   return (
     <div className="container page home">
       <section className="home__hero">
-        <p className="badge badge--primary">Base Converter Trainer · v1.0</p>
         <h1 className="home__title">
-          把进制转换
-          <span className="home__title-accent"> 练成肌肉记忆</span>
+          进制转换
+          <span className="home__title-accent">练习工具</span>
         </h1>
         <p className="home__lead">
-          面向学生与程序员的进制转换与算法训练平台。转换工具、随机出题、学习数据、错题复盘整合在同一个
-          PWA 里，装到桌面后断网也能继续练。
+          输入一个数就能看到「源进制 → 十进制 → 目标进制」的完整过程，也可以随机出题反复练习。
+          所有数据保存在浏览器本地，不涉及账号与后端。
         </p>
 
         <div className="home__actions">
@@ -62,23 +61,23 @@ export default function Home() {
         <dl className="home__facts">
           <div>
             <dt>支持进制</dt>
-            <dd>2 / 8 / 12 / 16</dd>
+            <dd>2 / 8 / 10 / 12 / 16</dd>
           </div>
           <div>
-            <dt>中间精度</dt>
-            <dd>BigInt 无溢出</dd>
+            <dt>中间值</dt>
+            <dd>BigInt 精确计算</dd>
           </div>
           <div>
             <dt>数据存储</dt>
-            <dd>本地 localStorage</dd>
+            <dd>浏览器 localStorage</dd>
           </div>
         </dl>
       </section>
 
       <section className="home__section">
         <div className="home__section-head">
-          <h2 className="home__section-title">四个模块，一条学习闭环</h2>
-          <p className="muted">从看懂 → 练熟 → 记录 → 复盘，缺一环都容易半途而废。</p>
+          <h2 className="home__section-title">四个模块</h2>
+          <p className="muted">转换、出题、统计、错题读写的是同一份本地数据，口径一致。</p>
         </div>
 
         <ul className="feature-grid">
@@ -99,8 +98,8 @@ export default function Home() {
         <div className="card home__try">
           <div className="home__try-head">
             <div>
-              <h2 className="card__title">先试一手</h2>
-              <p className="card__hint">不用跳页，直接在这里转一个数看看。</p>
+              <h2 className="card__title">直接试一下</h2>
+              <p className="card__hint">不跳页，在这里完成一次转换。</p>
             </div>
           </div>
           <ConverterForm initialFrom={2} initialTo={16} />
@@ -108,7 +107,7 @@ export default function Home() {
       </section>
 
       <section className="home__section">
-        <h2 className="home__section-title">三步上手</h2>
+        <h2 className="home__section-title">使用流程</h2>
         <ol className="step-list">
           {STEPS.map((step, index) => (
             <li key={step.title} className="step-item">

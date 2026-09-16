@@ -77,8 +77,8 @@ export default function AppShell() {
 
       <footer className="app-footer">
         <div className="container app-footer__inner">
-          <p className="muted">Base Converter Trainer · 进制转换与算法训练平台</p>
-          <p className="muted">React + Vite · 数据保存在本地浏览器</p>
+          <p className="muted">Base Converter Trainer · 进制转换练习工具</p>
+          <p className="muted">React 18 + Vite 5 · 数据保存在浏览器 localStorage</p>
         </div>
       </footer>
     </>

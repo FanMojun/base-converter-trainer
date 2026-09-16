@@ -161,7 +161,7 @@ export default function Dashboard() {
           </header>
 
           {recentMistakes.length === 0 ? (
-            <p className="muted">暂无错题，保持住。</p>
+            <p className="muted">还没有错题记录。</p>
           ) : (
             <ul className="recent-mistakes">
               {recentMistakes.map((record) => (

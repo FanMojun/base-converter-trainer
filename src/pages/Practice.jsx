@@ -67,7 +67,7 @@ export default function Practice() {
         <div>
           <h1 className="page__title">随机练习</h1>
           <p className="page__subtitle">
-            系统随机抽取数值、源进制与目标进制。作答后立刻判题，并给出十进制中间值的解析过程。
+            随机抽取数值、源进制与目标进制，提交后立即判题，并给出「源进制 → 十进制 → 目标进制」的解析过程。
           </p>
         </div>
         <Link className="btn btn--ghost" to="/mistakes">

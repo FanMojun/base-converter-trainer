@@ -203,7 +203,7 @@ export default function ConverterForm({ initialFrom = 2, initialTo = 16 }) {
           </p>
 
           <p className="muted">
-            统一流水线：{fromBase} 进制先解析为十进制，再由十进制编码为目标进制 · 记号说明{' '}
+            转换流水线：{fromBase} 进制解析为十进制，再编码为 {toBase} 进制 · 下标表示进制，例如{' '}
             {toSubscript(2)} 表示二进制
           </p>
         </div>

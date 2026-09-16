@@ -1,7 +1,7 @@
 {
   "name": "Base Converter Trainer",
   "short_name": "BaseTrainer",
-  "description": "面向学生与程序员的进制转换与算法训练平台：任意进制互转、随机练习、错题本与学习数据统计。",
+  "description": "进制转换工具与练习：2 / 8 / 10 / 12 / 16 进制互转、随机出题、错题本与本地学习统计。",
   "lang": "zh-CN",
   "dir": "ltr",
   "start_url": "./",

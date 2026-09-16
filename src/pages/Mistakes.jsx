@@ -64,9 +64,9 @@ export default function Mistakes() {
           <p className="empty-state__icon mono" aria-hidden="true">
             0x00
           </p>
-          <h2 className="empty-state__title">错题本还是空的</h2>
+          <h2 className="empty-state__title">错题本是空的</h2>
           <p className="empty-state__desc">
-            这通常意味着你还没开始练，或者暂时一题没错。去练习页做几道题，答错的内容会自动出现在这里。
+            练习页提交错误答案时，题目会自动收录到这里，并保留你当时的作答。
           </p>
           <Link className="btn btn--primary" to="/practice">
             去练习

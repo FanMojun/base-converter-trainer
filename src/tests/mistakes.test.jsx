@@ -22,7 +22,7 @@ describe('错题本 · 展示', () => {
   it('没有错题时给出引导，而不是空白页', () => {
     renderApp({ route: '/mistakes' });
 
-    expect(screen.getByText('错题本还是空的')).toBeInTheDocument();
+    expect(screen.getByText('错题本是空的')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '去练习' })).toBeInTheDocument();
   });
 
@@ -65,7 +65,7 @@ describe('错题本 · 操作', () => {
     await user.click(screen.getByRole('button', { name: '移除' }));
 
     expect(container.querySelectorAll('.mistake-item')).toHaveLength(0);
-    expect(screen.getByText('错题本还是空的')).toBeInTheDocument();
+    expect(screen.getByText('错题本是空的')).toBeInTheDocument();
     expect(readMistakes()).toEqual([]);
   });
 

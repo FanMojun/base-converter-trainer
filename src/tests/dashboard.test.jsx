@@ -182,6 +182,6 @@ describe('统计页 · 重置数据', () => {
     await user.click(screen.getByRole('button', { name: '确认清空' }));
 
     expect(readStats()).toMatchObject({ total: 0, correct: 0, wrong: 0, streak: 0 });
-    expect(screen.getByText('暂无错题，保持住。')).toBeInTheDocument();
+    expect(screen.getByText('还没有错题记录。')).toBeInTheDocument();
   });
 });

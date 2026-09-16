@@ -3,9 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 import { readConverterOutput, renderApp } from './test-utils.jsx';
 
-/** 首页的一级标题，用来判断「当前在首页」。 */
+/** 首页的一级标题，用来判断「当前在首页」 */
+const HOME_HEADING = /^进制转换练习工具$/;
+
 function homeHeading() {
-  return screen.getByRole('heading', { level: 1, name: /把进制转换/ });
+  return screen.getByRole('heading', { level: 1, name: HOME_HEADING });
 }
 
 describe('应用外壳 · 路由', () => {
@@ -24,7 +26,7 @@ describe('应用外壳 · 路由', () => {
       { link: '练习', heading: '随机练习' },
       { link: '统计', heading: '学习统计' },
       { link: '错题本', heading: '错题本' },
-      { link: '首页', heading: /把进制转换/ },
+      { link: '首页', heading: HOME_HEADING },
     ];
 
     for (const item of cases) {
