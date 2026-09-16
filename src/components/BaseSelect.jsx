@@ -1,4 +1,4 @@
-import { BASE_LABELS, SUPPORTED_BASES } from '../utils/converter';
+import { SUPPORTED_BASES, baseName } from '../utils/converter';
 
 /**
  * 进制下拉选择器。
@@ -29,7 +29,7 @@ export default function BaseSelect({
       >
         {options.map((base) => (
           <option key={base} value={base}>
-            {BASE_LABELS[base].name}（{base}）
+            {baseName(base)}（{base}）
           </option>
         ))}
       </select>

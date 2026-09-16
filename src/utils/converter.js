@@ -22,13 +22,13 @@ export const DIGIT_SETS = {
   16: '0123456789ABCDEF',
 };
 
-/** 进制的展示信息（中文名 + 英文名）。 */
+/** 进制的展示名。界面是中文的，就不额外维护一份英文名了。 */
 export const BASE_LABELS = {
-  2: { name: '二进制', english: 'Binary' },
-  8: { name: '八进制', english: 'Octal' },
-  10: { name: '十进制', english: 'Decimal' },
-  12: { name: '十二进制', english: 'Duodecimal' },
-  16: { name: '十六进制', english: 'Hexadecimal' },
+  2: '二进制',
+  8: '八进制',
+  10: '十进制',
+  12: '十二进制',
+  16: '十六进制',
 };
 
 /** 错误码，UI 层据此决定提示文案与输入框高亮方式。 */
@@ -58,12 +58,7 @@ export function isSupportedBase(base) {
 
 /** 取进制的可读名称，例如 16 → “十六进制”。 */
 export function baseName(base) {
-  return BASE_LABELS[base]?.name ?? `${base} 进制`;
-}
-
-/** 取进制的英文名，例如 2 → “Binary”。 */
-export function baseEnglish(base) {
-  return BASE_LABELS[base]?.english ?? `Base ${base}`;
+  return BASE_LABELS[base] ?? `${base} 进制`;
 }
 
 /** 把数字转成下标形式，用于渲染 101010₂ 这样的记号。 */

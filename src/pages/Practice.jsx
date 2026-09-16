@@ -44,13 +44,9 @@ export default function Practice() {
     [question, feedback, recordAttempt],
   );
 
-  const handleNext = useCallback(() => {
-    setQuestion(generateQuestion({ difficulty }));
-    setFeedback(null);
-    setIsRetry(false);
-  }, [difficulty]);
-
-  const handleSkip = useCallback(() => {
+  // 出下一题：清掉判题反馈、退出「错题重练」标记。
+  // 「下一题」和「跳过本题」是同一个动作，共用一个实现，避免两份代码将来走偏。
+  const goToNextQuestion = useCallback(() => {
     setQuestion(generateQuestion({ difficulty }));
     setFeedback(null);
     setIsRetry(false);
@@ -102,8 +98,8 @@ export default function Practice() {
             feedback={feedback}
             isRetry={isRetry}
             onSubmit={handleSubmit}
-            onNext={handleNext}
-            onSkip={handleSkip}
+            onNext={goToNextQuestion}
+            onSkip={goToNextQuestion}
           />
         </div>
 

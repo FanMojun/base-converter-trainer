@@ -13,6 +13,9 @@ import {
   createConversionRecord,
   createEmptyStats,
   isSameConversion,
+  sanitizeConversions,
+  sanitizeMistakes,
+  sanitizeStats,
   upsertHistory,
 } from './StatsContext';
 
@@ -21,41 +24,44 @@ import {
  * 练习页只负责判题、转换器只负责算结果，
  * 统计 / 错题 / 转换历史的写入统一收口到这里，
  * 这样任何页面触发的数据变更都会得到一致的数据结构。
+ *
+ * 读取时经过 sanitize 校验，所以拿到的 state 一定是合法结构，
+ * 下面的写操作不需要再写 `Array.isArray(previous) ? previous : []` 这类防御代码。
  */
 export default function StatsProvider({ children }) {
-  const [stats, setStats, resetStats] = useStorage(STATS_STORAGE_KEY, createEmptyStats);
-  const [mistakes, setMistakes, resetMistakes] = useStorage(MISTAKES_STORAGE_KEY, []);
+  const [stats, setStats, resetStats] = useStorage(STATS_STORAGE_KEY, createEmptyStats, sanitizeStats);
+  const [mistakes, setMistakes, resetMistakes] = useStorage(
+    MISTAKES_STORAGE_KEY,
+    [],
+    sanitizeMistakes,
+  );
   const [conversions, setConversions, resetConversions] = useStorage(
     CONVERSIONS_STORAGE_KEY,
     [],
+    sanitizeConversions,
   );
 
   /** 记录一次作答：更新计数、连击、按天趋势，答错时顺带写入错题本。 */
   const recordAttempt = useCallback(
     ({ correct, question, submitted }) => {
       setStats((previous) => {
-        const base = previous ?? createEmptyStats();
-        const total = (base.total ?? 0) + 1;
-        const correctCount = (base.correct ?? 0) + (correct ? 1 : 0);
-        const streak = correct ? (base.streak ?? 0) + 1 : 0;
+        const total = previous.total + 1;
+        const correctCount = previous.correct + (correct ? 1 : 0);
+        const streak = correct ? previous.streak + 1 : 0;
 
         return {
           total,
           correct: correctCount,
           wrong: total - correctCount,
           streak,
-          bestStreak: Math.max(base.bestStreak ?? 0, streak),
-          history: upsertHistory(base.history, correct),
+          bestStreak: Math.max(previous.bestStreak, streak),
+          history: upsertHistory(previous.history, correct),
         };
       });
 
       if (!correct && question) {
         const record = createMistakeRecord(question, submitted);
-
-        setMistakes((previous) => {
-          const list = Array.isArray(previous) ? previous : [];
-          return [record, ...list].slice(0, MAX_MISTAKE_RECORDS);
-        });
+        setMistakes((previous) => [record, ...previous].slice(0, MAX_MISTAKE_RECORDS));
       }
     },
     [setStats, setMistakes],
@@ -63,7 +69,7 @@ export default function StatsProvider({ children }) {
 
   const removeMistake = useCallback(
     (id) => {
-      setMistakes((previous) => (Array.isArray(previous) ? previous : []).filter((item) => item.id !== id));
+      setMistakes((previous) => previous.filter((item) => item.id !== id));
     },
     [setMistakes],
   );
@@ -78,13 +84,11 @@ export default function StatsProvider({ children }) {
   const recordConversion = useCallback(
     (payload) => {
       setConversions((previous) => {
-        const list = Array.isArray(previous) ? previous : [];
-
-        if (isSameConversion(list[0], payload)) {
-          return [{ ...list[0], result: payload.result }, ...list.slice(1)];
+        if (isSameConversion(previous[0], payload)) {
+          return [{ ...previous[0], result: payload.result }, ...previous.slice(1)];
         }
 
-        return [createConversionRecord(payload), ...list].slice(0, MAX_CONVERSION_RECORDS);
+        return [createConversionRecord(payload), ...previous].slice(0, MAX_CONVERSION_RECORDS);
       });
     },
     [setConversions],
@@ -99,34 +103,32 @@ export default function StatsProvider({ children }) {
     resetConversions();
   }, [resetStats, resetMistakes, resetConversions]);
 
-  const value = useMemo(() => {
-    const safeStats = stats ?? createEmptyStats();
-    const safeConversions = Array.isArray(conversions) ? conversions : [];
-
-    return {
-      stats: safeStats,
-      mistakes: Array.isArray(mistakes) ? mistakes : [],
-      conversions: safeConversions,
-      conversionTotal: safeConversions.length,
-      accuracy: accuracyOf(safeStats),
+  const value = useMemo(
+    () => ({
+      stats,
+      mistakes,
+      conversions,
+      conversionTotal: conversions.length,
+      accuracy: accuracyOf(stats),
       recordAttempt,
       recordConversion,
       removeMistake,
       clearMistakes,
       clearConversions,
       resetAll,
-    };
-  }, [
-    stats,
-    mistakes,
-    conversions,
-    recordAttempt,
-    recordConversion,
-    removeMistake,
-    clearMistakes,
-    clearConversions,
-    resetAll,
-  ]);
+    }),
+    [
+      stats,
+      mistakes,
+      conversions,
+      recordAttempt,
+      recordConversion,
+      removeMistake,
+      clearMistakes,
+      clearConversions,
+      resetAll,
+    ],
+  );
 
   return <StatsContext.Provider value={value}>{children}</StatsContext.Provider>;
 }

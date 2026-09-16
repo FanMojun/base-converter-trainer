@@ -94,7 +94,7 @@ export default function Mistakes() {
               <dl className="mistake-item__answers">
                 <div>
                   <dt>你的答案</dt>
-                  <dd className="mistake-item__wrong mono">{record.submitted}</dd>
+                  <dd className="mistake-item__wrong mono">{record.submitted || '（未作答）'}</dd>
                 </div>
                 <div>
                   <dt>正确答案</dt>

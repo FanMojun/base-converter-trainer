@@ -176,8 +176,8 @@ describe('错题记录', () => {
     expect(record.id).toContain(FIXED_QUESTION.id);
   });
 
-  it('未作答时记为「（未作答）」而不是空字符串', () => {
-    expect(createMistakeRecord(FIXED_QUESTION, '   ').submitted).toBe('（未作答）');
+  it('未作答时 submitted 存空串，展示文案由视图层补', () => {
+    expect(createMistakeRecord(FIXED_QUESTION, '   ').submitted).toBe('');
   });
 
   it('错题记录可以还原成可重练的题目', () => {

@@ -161,17 +161,19 @@ export function checkAnswer(question, rawAnswer) {
   };
 }
 
-/** 把一道错题整理成可持久化的记录（不含答案对错之外的中间状态）。 */
+/**
+ * 把一道错题整理成可持久化的记录（不含答案对错之外的中间状态）。
+ * submitted 存的是用户实际输入（未作答就是空串）——
+ * 「未作答」这类展示文案由视图层决定，数据层不掺 UI 文本。
+ */
 export function createMistakeRecord(question, submitted) {
-  const answer = normalizeInput(submitted);
-
   return {
     id: `${question.id}_${Date.now().toString(36)}`,
     source: question.source,
     fromBase: question.fromBase,
     toBase: question.toBase,
     answer: question.answer,
-    submitted: answer === '' ? '（未作答）' : answer,
+    submitted: normalizeInput(submitted),
     decimal: question.decimal,
     createdAt: Date.now(),
   };

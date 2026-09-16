@@ -64,6 +64,81 @@ export function accuracyOf(stats) {
   return Math.round(((stats.correct ?? 0) / total) * 100);
 }
 
+/** 把任意输入收敛成非负整数，非法值一律当 0。 */
+function toCount(value) {
+  return Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+}
+
+/**
+ * 校验并修复从 localStorage 读到的统计数据。
+ * 返回的一定是当前版本期望的完整结构，上游不必再写防御性判断。
+ * 例：只存了 {total, correct} 的旧数据会被补齐 history 等字段，
+ * correct 大于 total 这种矛盾数据会被裁到 total。
+ */
+export function sanitizeStats(value) {
+  if (!value || typeof value !== 'object') return createEmptyStats();
+
+  const total = toCount(value.total);
+  const correct = Math.min(toCount(value.correct), total);
+  const streak = toCount(value.streak);
+
+  const history = (Array.isArray(value.history) ? value.history : [])
+    .filter((item) => item && typeof item.date === 'string')
+    .map((item) => {
+      const dayTotal = toCount(item.total);
+      return {
+        date: item.date,
+        total: dayTotal,
+        correct: Math.min(toCount(item.correct), dayTotal),
+      };
+    })
+    .slice(-HISTORY_WINDOW_DAYS);
+
+  return {
+    total,
+    correct,
+    wrong: total - correct,
+    streak,
+    bestStreak: Math.max(toCount(value.bestStreak), streak),
+    history,
+  };
+}
+
+/** 错题记录的必要字段，缺一个就没法渲染出完整卡片，直接判为无效。 */
+function isMistakeLike(item) {
+  return (
+    Boolean(item) &&
+    typeof item.id === 'string' &&
+    typeof item.source === 'string' &&
+    Number.isFinite(item.fromBase) &&
+    Number.isFinite(item.toBase) &&
+    typeof item.answer === 'string'
+  );
+}
+
+/** 过滤掉残缺的错题记录，并按上限截断。 */
+export function sanitizeMistakes(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isMistakeLike).slice(0, MAX_MISTAKE_RECORDS);
+}
+
+/** 转换记录的必要字段。 */
+function isConversionLike(item) {
+  return (
+    Boolean(item) &&
+    typeof item.input === 'string' &&
+    Number.isFinite(item.fromBase) &&
+    Number.isFinite(item.toBase) &&
+    typeof item.result === 'string'
+  );
+}
+
+/** 过滤掉残缺的转换记录，并按上限截断。 */
+export function sanitizeConversions(value) {
+  if (!Array.isArray(value)) return [];
+  return value.filter(isConversionLike).slice(0, MAX_CONVERSION_RECORDS);
+}
+
 /** 生成一条转换记录的 id：时间戳 + 随机串，足够避免同一毫秒内碰撞。 */
 function createConversionId() {
   return `c_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;

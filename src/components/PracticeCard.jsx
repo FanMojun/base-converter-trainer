@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { DIGIT_SETS, baseName, explainConversion, groupDigits } from '../utils/converter';
 
@@ -24,6 +24,13 @@ export default function PracticeCard({ question, feedback, isRetry = false, onSu
       inputRef.current?.focus();
     }
   }, [questionId]);
+
+  // 解析文本只取决于题目本身：题目没变就不重算。
+  // 放在提前 return 之前，保证每次渲染的 Hook 调用顺序一致。
+  const explanation = useMemo(
+    () => (question ? explainConversion(question.source, question.fromBase, question.toBase) : ''),
+    [question],
+  );
 
   if (!question) {
     return (
@@ -114,9 +121,7 @@ export default function PracticeCard({ question, feedback, isRetry = false, onSu
             <sub>{question.toBase}</sub>
           </p>
 
-          <p className="practice-feedback__explain mono">
-            解析：{explainConversion(question.source, question.fromBase, question.toBase)}
-          </p>
+          <p className="practice-feedback__explain mono">解析：{explanation}</p>
 
           <p className="practice-feedback__tip">
             {feedback.correct
