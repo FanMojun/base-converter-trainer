@@ -103,9 +103,9 @@ export default function Practice() {
           />
         </div>
 
-        <aside className="card practice-page__aside">
-          <h2 className="card__title">本次会话</h2>
-          <p className="card__hint">当前页面内的作答情况，累计数据见统计页。</p>
+        <aside className="panel practice-page__aside">
+          <h2 className="panel__title">本次会话</h2>
+          <p className="panel__hint">当前页面内的作答情况，累计数据见统计页。</p>
 
           <dl className="stat-mini">
             <div>

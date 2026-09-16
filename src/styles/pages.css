@@ -227,6 +227,19 @@
   gap: var(--space-5);
 }
 
+/*
+ * 两个页面的侧栏都是说明性内容（速查表 / 本轮会话数据），
+ * 用 .panel 而不是 .card：主体是交互控件，侧栏退到背景里，层次才成立。
+ */
+.converter-page__aside,
+.practice-page__aside {
+  padding-bottom: var(--space-2);
+}
+
+.converter-page__examples {
+  margin-top: var(--space-7);
+}
+
 .reference-list {
   display: flex;
   flex-direction: column;
