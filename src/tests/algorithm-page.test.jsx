@@ -146,6 +146,34 @@ describe('实现说明 · 边界情况', () => {
   });
 });
 
+describe('实现说明 · 窄屏下摊开的表格', () => {
+  it('每个单元格都带着与列头一致的标签', async () => {
+    await openAlgorithm();
+
+    // 640px 以下表头会被隐藏，列名改由单元格的 data-label 提供 ——
+    // 漏一个就等于屏幕上有个数字没有名字，而 jsdom 量不到布局，只能守这份约定
+    const stacked = [...document.querySelectorAll('table.spec-table--stack')];
+
+    expect(stacked.length).toBeGreaterThan(0);
+
+    stacked.forEach((table) => {
+      const headers = [...table.querySelectorAll('thead th')].map((th) => th.textContent.trim());
+
+      expect(headers.length).toBeGreaterThan(1);
+
+      bodyRows(table).forEach((row) => {
+        const cells = [...row.querySelectorAll('td')];
+
+        // 首列是行标题，其余单元格按顺序对应剩下的列头
+        expect(cells).toHaveLength(headers.length - 1);
+        cells.forEach((cell, index) => {
+          expect(cell.dataset.label).toBe(headers[index + 1]);
+        });
+      });
+    });
+  });
+});
+
 describe('实现说明 · 入口', () => {
   it('从导航栏可以进入这一页', async () => {
     const { user } = renderApp();

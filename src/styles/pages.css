@@ -246,6 +246,9 @@
  */
 .algorithm-page {
   display: grid;
+  /* 单列也要写 minmax(0, 1fr)：隐式的 auto 列等于 min-content，
+     里面的表格会把这一列连同整页一起撑宽，overflow-x 也就永远不生效了 */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-7);
   margin-top: var(--space-6);
   max-width: 78ch;

@@ -184,7 +184,7 @@ export default function Algorithm() {
           </p>
 
           <div className="table-wrap">
-            <table className="spec-table">
+            <table className="spec-table spec-table--stack">
               <caption className="spec-table__caption">
                 同一串输入（{BIG_SAMPLE.length} 位全为 1 的二进制）的两种算法结果
               </caption>
@@ -199,8 +199,12 @@ export default function Algorithm() {
                 {PRECISION_ROWS.map((row) => (
                   <tr key={row.label}>
                     <th scope="row">{row.label}</th>
-                    <td className="mono spec-table__wrong">{row.number}</td>
-                    <td className="mono spec-table__result">{row.bigint}</td>
+                    <td className="mono spec-table__wrong" data-label="用 Number">
+                      {row.number}
+                    </td>
+                    <td className="mono spec-table__result" data-label="用 BigInt（本项目）">
+                      {row.bigint}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -238,11 +242,15 @@ for (const char of value) {
             相同的代码路径。这里统一拆成两步：
           </p>
 
+          {/* 每行都控制在手机能整行显示的宽度内（实测最长 267px，内容盒只有 291px）：
+              流程图被横向截断就等于没画，而中文在等宽字体下占两个字符宽。 */}
           <pre className="code">{`  输入串（${SAMPLE.from} 进制）
-      │  parseToDecimal：从左到右 acc = acc × 进制 + 当前位的值
+      │  parseToDecimal
+      │  acc = acc × 进制 + 当前位
       ▼
   BigInt 十进制中间值
-      │  decimalToBase：对目标进制反复短除取余，余数倒序拼接
+      │  decimalToBase
+      │  反复短除取余，余数倒着读
       ▼
   输出串（${SAMPLE.to} 进制）`}</pre>
 
@@ -323,7 +331,7 @@ for (const char of value) {
           </p>
 
           <div className="table-wrap">
-            <table className="spec-table">
+            <table className="spec-table spec-table--stack">
               <caption className="spec-table__caption">会被拒绝的输入</caption>
               <thead>
                 <tr>
@@ -337,11 +345,15 @@ for (const char of value) {
                 {REJECTED_ROWS.map((row) => (
                   <tr key={row.label}>
                     <th scope="row">{row.label}</th>
-                    <td className="mono">
+                    <td className="mono" data-label="输入">
                       {displayInput(row.input)} → {row.from}
                     </td>
-                    <td className="mono muted">{row.code}</td>
-                    <td className="muted">{row.detail}</td>
+                    <td className="mono muted" data-label="错误码">
+                      {row.code}
+                    </td>
+                    <td className="muted" data-label="提示原文">
+                      {row.detail}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -349,7 +361,7 @@ for (const char of value) {
           </div>
 
           <div className="table-wrap">
-            <table className="spec-table">
+            <table className="spec-table spec-table--stack">
               <caption className="spec-table__caption">会被接受的输入</caption>
               <thead>
                 <tr>
@@ -362,10 +374,12 @@ for (const char of value) {
                 {ACCEPTED_ROWS.map((row) => (
                   <tr key={row.label}>
                     <th scope="row">{row.label}</th>
-                    <td className="mono">
+                    <td className="mono" data-label="输入">
                       {displayInput(row.input)} → {row.from} 转 {row.to}
                     </td>
-                    <td className="mono spec-table__result">{shorten(row.detail)}</td>
+                    <td className="mono spec-table__result" data-label="结果">
+                      {shorten(row.detail)}
+                    </td>
                   </tr>
                 ))}
               </tbody>
